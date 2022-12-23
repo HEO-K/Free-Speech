@@ -1,0 +1,28 @@
+{
+    "Name": "Speech_3T",
+    "bids_path": "/mnt/d/speech_3T/_DATA_fMRI",
+    "bids_path_window": "D:/speech_3T/_DATA_fMRI",
+    "audio_path": "/mnt/d/speech_3T/_DATA_Audio",
+    "audio_path_window": "D:/speech_3T/_DATA_Audio",
+    "info": [
+        {
+            "name": "REST"
+        },
+        {
+            "name": "speechFREE"
+        },
+        {
+            "name": "speechTOPIC",
+            "runs": 2
+        },
+        {
+            "name": "listeningFREE"
+        },
+        {
+            "name": "listeningTOPIC"
+        },
+        {
+            "name": "T1"
+        }
+    ]
+}

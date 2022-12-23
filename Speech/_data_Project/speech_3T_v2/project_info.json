@@ -1,0 +1,37 @@
+{
+    "Name": "Speech_3T",
+    "bids_path": "/mnt/d/speech_3T/_DATA_fMRI",
+    "bids_path_window": "D:/speech_3T/_DATA_fMRI",
+    "audio_path": "/mnt/d/speech_3T/_DATA_Audio",
+    "audio_path_window": "D:/speech_3T/_DATA_Audio",
+    "info": [
+        {
+            "name": "REST",
+            "datatype": "func"
+        },
+        {
+            "name": "speechFREE",
+            "datatype": "func"
+        },
+        {
+            "name": "speechTOPIC",
+            "datatype": "func"
+        },
+        {
+            "name": "speechSTROLL",
+            "datatype": "func"
+        },
+        {
+            "name": "listeningFREE",
+            "datatype": "func"
+        },
+        {
+            "name": "listeningTOPIC",
+            "datatype": "func"
+        },
+        {
+            "name": "T1",
+            "datatype": "anat"
+        }
+    ]
+}
