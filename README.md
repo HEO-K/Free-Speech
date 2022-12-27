@@ -1,5 +1,7 @@
 # Free-Speech
 
+
+
 ## 0. 구성
 `Speech`: python 모듈\
 `speech_3T`: preprocessing\
@@ -7,4 +9,7 @@
 `Speech_window.pth`: 모듈의 경로 설정 파일(Window OS)
 
 
+
+
 ## 1. Preprocessing 해보기
+speech_3T의 `README.md`를 참고하자.

@@ -99,12 +99,14 @@ def check_dcm(Project, input_path, ses = None):
         ans = input(msg)
         if ans == "n": return
     
-    print("\n-------------------------------------\n    TASK&RUN    -->    Raw_folder\n-------------------------------------")
+    print("\n-----------------------------------------------------")
+    print("        TASK&RUN        -->        Raw_folder")
+    print("-----------------------------------------------------")
     for run in check_results.keys():
         try:
-            print("%14s  -->  %s" % (run, check_results[run][0]))
+            print("%22s  -->  %s" % (run, check_results[run][0]))
         except:
-            print("%14s  -->  %s" % (run, check_results[run]))
+            print("%22s  -->  %s" % (run, check_results[run]))
     print("\n\n")
     return(check_results)
     

@@ -7,6 +7,8 @@ import json
 base_path = "D:/Functions/Speech/_data_Project"
 #base_path = "/mnt/d/Functions/Speech/_data_Project"
 
+
+
 #####################################################################################
 # 프로젝트 이름 
 Project_name = "Speech_3T"
@@ -21,11 +23,17 @@ sessions = 0
 audio_path = "/mnt/d/speech_3T/_DATA_Audio"
 audio_path_window = "D:/speech_3T/_DATA_Audio"
 
+
+
 #####################################################################################
-# run 정보, 세션이 여러개라면 이중 리스트를 만들어야 한다. 하나면 단일 리스트
-# task 이름 (scan protocol 기준으로, T1포함 되도록)
-run_name = ["REST", "speechFREE", "speechTOPIC", "listeningFREE", "listeningTOPIC", "T1"]
-# 각 task마다 최대 run수 (T1포함-> T1은 0으로), bids의 run-0N이 안나오게 하길 원한다면 0으로
+# run 정보, 세션이 여러개라면 이중 리스트를 만들어야 한다. 하나면 단일 리스트 (ex: [[ses1],[se2]])
+# task 이름은 bids format에서 task-XXX로 붙는 이름이다.
+# fMRI protocol 이름은 위 task이름이 기준이다. task-speech_run-1(task name) --> SPEECH1(protocol name) 
+# 위의 조건에 맞지 않을 경우 실행 안되므로 protocol이름을 수정하거나 아니면 코드를 수정한다.
+run_name = ["REST", "speechFREE", "speechTOPIC", "listeningFREE", "listeningTOPIC", "T1"] # T1도 포함해야.
+
+# 각 task마다 최대 run수 (T1포함-> T1은 0으로), bids의 run-XX이 안나오게 하길 원한다면 0으로,
+# run-1이 무조건 붙어 있게 하고프면 1으로 하면 된다.
 # session마다 만들어야 하며, 역시 여러 세션이면 이중 리스트, 아니면 단일 리스트로
 run_numbers = [0,0,2,0,0,0]
 
