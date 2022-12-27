@@ -239,9 +239,11 @@ sentences = results['segments']
 ![Clova results](./img/clova_res.png)
 우리는 문장이 아니라 단어별 받아쓰기가 필요함으로 이 중 `words`만 따로 뽑아서 저장하면 된다.
 <br/>
+<br/>
 
 ![Clova words](./img/clova_word.png)\
 `words` 안에는 [시작 시각(ms), 끝 시각(ms), 단어]의 리스트가 저장되어 있다.
+<br/>
 <br/>
 
 ```python
@@ -277,7 +279,7 @@ f_FA.close()
 * 말 더듬은 것, 음... 어... 같은 단어들은 받아쓰기가 안 되어 있을 가능성이 크다. 의도에 맞게 수정한다.
 <br/>
 
-**내가 만약 윈도우 사용자라면...**
+**내가 만약 윈도우 사용자라면...**\
 [팟플레이어](https://tv.kakao.com/guide/potplayer) 사용을 추천.\
 팟플레이어는 방향키로 재생 시간을 이동할 수 있는데, 이 시간을 조절할 수 있어서 매우 편하다.\
 ![potplayer](./img/potplayer.png)\
