@@ -1,5 +1,5 @@
 # fMRI Preprocessing
-[다음](https://n-kwon.notion.site/20221004-780d16024f3149ae91cdca3376a8ee63) session을 preprocessing 해보자. (TR=1s, 3×3×3mm^3^)
+[다음](https://n-kwon.notion.site/20221004-780d16024f3149ae91cdca3376a8ee63) session을 preprocessing 해보자. (TR=1s, 3×3×3mm<sup>3</sup>)
 <br/>
 <br/>
 <br/>
