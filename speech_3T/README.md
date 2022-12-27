@@ -1,5 +1,5 @@
 # fMRI Preprocessing
-(코드는 `/Free-Speech/Speech/Preprocessing/EPI.py` 참고)
+(코드는 `/Free-Speech/Speech/Preprocessing/EPI.py` 참고)\
 [다음](https://n-kwon.notion.site/20221004-780d16024f3149ae91cdca3376a8ee63) session을 preprocessing 해보자. (TR=1s, 3×3×3mm<sup>3</sup>)
 <br/>
 <br/>
@@ -53,7 +53,7 @@ done
 * Scaling (mean=0)
 * Detrending 
 * Frequency filtering (bandpass: 0.01 ~ 99999 (Hz))
-* Smoothing (2→3, 2.5→4, 3→5 (mm))
+* Smoothing (2→3, 2.5→4, 3→5 (mm))\
 `preprocessing_allinone.sh`의 preprocess 단락을 Free-Speech 폴더 위치에서 실행
 
 ```bash
@@ -68,7 +68,7 @@ done
 ```
 
 실행 결과 아래와 같은 파일들이 생성\
-![Results](./img/process_all.png)
+![Results](./img/process_all.png)\
 
 
 모션 이미지는 `speech_3T/_DATA_fMRI/derivatives/sub-001/figures/sub-001_motion.png`로 저장된다.
@@ -181,14 +181,14 @@ with open(json_path, "w", encoding="utf-8") as f:
 <br/>
 
 # Audio Preprocessing
-(코드는 `/Free-Speech/Speech/Preprocessing/Audio.py` 참고)
+(코드는 `/Free-Speech/Speech/Preprocessing/Audio.py` 참고)\
 Raw audio → word timestamp 까지
 <br/>
 <br/>
 <br/>
 
 ## 1. 자동 받아쓰기 및 강제 정렬
-[네이버 클로바](https://clova.ai/speech)를 이용하여 받아쓰기 및 강제 정렬(단어의 시작 및 끝 시간 추출)을 진행한다.
+[네이버 클로바](https://clova.ai/speech)를 이용하여 받아쓰기 및 강제 정렬(단어의 시작 및 끝 시간 추출)을 진행한다.\
 [네이버 클라우드 플랫폼 및 클로바 사용법](https://n-kwon.notion.site/Naver-Clova-84f61011a0d54b9c916c39878d22818d)
 
 ```python
@@ -225,8 +225,10 @@ response = requests.post(headers=headers, url=invoke_url + '/recognizer/upload',
 # 클로바 요청
 results = response.text
 ```
+<br/>
 
-`results`는 json형식으로 저장된다. (자세한 내용은 [여기](https://api-fin.ncloud-docs.com/docs/ai-application-service-clovaspeech-clovaspeech) 참고)\
+
+`results`는 json형식으로 저장된다. (자세한 내용은 [여기](https://api-fin.ncloud-docs.com/docs/ai-application-service-clovaspeech-clovaspeech) 참고)
 ```python3
 # json 결과 불러오기 -> 딕셔너리 형식
 results = json.loads(results)
@@ -234,10 +236,13 @@ results = json.loads(results)
 sentences = results['segments']
 ```
 
-![Clova results](./img/clova_res.png)\
-우리는 문장이 아니라 단어별 받아쓰기가 필요함으로 이 중 `words`만 따로 뽑아서 저장하면 된다.\
+![Clova results](./img/clova_res.png)
+우리는 문장이 아니라 단어별 받아쓰기가 필요함으로 이 중 `words`만 따로 뽑아서 저장하면 된다.
+<br/>
+
 ![Clova words](./img/clova_word.png)\
-`words` 안에는 [시작 시각(ms), 끝 시각(ms), 단어]의 리스트가 저장되어 있다.\
+`words` 안에는 [시작 시각(ms), 끝 시각(ms), 단어]의 리스트가 저장되어 있다.
+<br/>
 
 ```python
 # 전체 받아쓰기 결과
@@ -264,12 +269,15 @@ f_FA.close()
 ### 2. 받아쓰기 수정
 받아쓰기 결과는 직접 수정해야 한다. 결과 파일 중 `_FA.txt`의 받아쓰기 및 시간을 수정한다.\
 그리고 그 결과 파일은 같은 경로에 `_FA_new.txt`로 저장한다.\
-**수정 시 유의사항**\
+<br/>
+
+**수정 시 유의사항**
 * 문장의 끝을 온점으로 구분하기 때문에 온점을 꼭 추가해주자. 반대로 이상한 곳에 찍혀있는 온점은 없애자.
 * 시간을 수정할 때는 1ms정도는 몰라도, TR단위는 정확하게 하려고 노력하자.
 * 말 더듬은 것, 음... 어... 같은 단어들은 받아쓰기가 안 되어 있을 가능성이 크다. 의도에 맞게 수정한다.
+<br/>
 
-##### 내가 만약 윈도우 사용자라면...
+**내가 만약 윈도우 사용자라면...**
 [팟플레이어](https://tv.kakao.com/guide/potplayer) 사용을 추천.\
 팟플레이어는 방향키로 재생 시간을 이동할 수 있는데, 이 시간을 조절할 수 있어서 매우 편하다.\
 ![potplayer](./img/potplayer.png)\
@@ -306,6 +314,7 @@ def apply_FA(file_path):
     f_stt_new.close()
     return "Finished"
 ```
+<br/>
 
 ##### 3.2 문장 종결 지점, 말 한 시간 추출
 ```python
@@ -357,7 +366,7 @@ def audiostamp(input, output_folder="./"):
 ### All in one
 오디오 전처리를 한 번에 하고자 한다면, `/Free-Speech/speech_3T/audio_preprocessing_allinone.py`를 실행\
 예시 파일이 있으니 `Free-Speech`폴더 위치에서 실행하면 전처리를 체험해볼 수 있다.\
-커스텀을 할려면 변수만 수정하면 된다. 단, 오디오 파일명도 bids format을 따라야 한다.\
+내 파일에 맞게 커스텀을 하려면 변수만 수정하면 된다. 단, 오디오 파일명도 bids format을 따라야 한다.
 
 ```python
 # %%
