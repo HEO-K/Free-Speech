@@ -3,7 +3,7 @@ import numpy as np
 import os
 import json
 
-# 정보 파일 저장 위치: _data_Project/Project_Name/에 저장됨
+# 정보 파일 저장 위치: Speech/_data_Project/Project_Name/에 저장됨
 base_path = "D:/Functions/Speech/_data_Project"
 #base_path = "/mnt/d/Functions/Speech/_data_Project"
 

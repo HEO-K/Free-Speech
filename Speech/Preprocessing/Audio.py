@@ -60,7 +60,7 @@ def apply_FA(file_path):
     """ _FA_new.txt파일을 통해 _STT_new.txt를 생성
     
         Args: 
-            file_path (str): 파일 경로
+            file_path (str): _FA_new.txt 파일 경로
     """
     STT_new = []
     f_FA_new = open(file_path, 'r', encoding="utf-8")
@@ -87,7 +87,7 @@ def audiostamp(input, output_folder="./"):
 
     Args:
         input (str): *_FA_new.txt
-        output_folder (str, optional): _description_. Defaults to "./".
+        output_folder (str, optional): 결과 파일 위치. Defaults to "./".
     """
     with open(input, 'r', encoding="utf-8") as f:
         text = f.readlines()
