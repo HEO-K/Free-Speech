@@ -1,5 +1,6 @@
 # fMRI Preprocessing
-[다음](https://n-kwon.notion.site/20221004-780d16024f3149ae91cdca3376a8ee63) session을 preprocessing 해보자. (TR=1s, 3×3×3mm^3^)\
+[다음](https://n-kwon.notion.site/20221004-780d16024f3149ae91cdca3376a8ee63) session을 preprocessing 해보자. (TR=1s, 3×3×3mm^3^)
+\
 \
 \
 \
@@ -61,8 +62,10 @@ do
 python ${script_path}/afterprep_all.py ${project} ${sub}
 done
 ```
+
 실행 결과 아래와 같은 파일들이 생성
 ![Results](./img/process_all.png)
+
 모션 이미지는 `speech_3T/_DATA_fMRI/derivatives/sub-001/figures/sub-001_motion.png`로 저장된다.
 ![Motion](./img/sub-001_motion.png)
 \
