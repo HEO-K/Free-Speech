@@ -1,6 +1,7 @@
 # fMRI Preprocessing
-(코드는 [`/Free-Speech/Speech/Preprocessing/EPI.py`](HEO-K/Free-Speech/Speech/Preprocessing/EPI.py) 참고)\
+(코드는 [`/Free-Speech/Speech/Preprocessing/EPI.py`](../Speech/Preprocessing/EPI.py) 참고)\
 [다음](https://n-kwon.notion.site/20221004-780d16024f3149ae91cdca3376a8ee63) session을 preprocessing 해보자. (TR=1s, 3×3×3mm<sup>3</sup>)
+![Session info](./img/session.png)
 <br/>
 <br/>
 <br/>
@@ -67,9 +68,9 @@ python ${script_path}/afterprep_all.py ${project} ${sub}
 done
 ```
 
-실행 결과 아래와 같은 파일들이 생성\
-![Results](./img/process_all.png)\
-
+실행 결과 아래와 같은 파일들이 생성  
+![Results](./img/process_all.png)
+<br/>
 
 모션 이미지는 `speech_3T/_DATA_fMRI/derivatives/sub-001/figures/sub-001_motion.png`로 저장된다.
 ![Motion](./img/sub-001_motion.png)
@@ -88,7 +89,7 @@ import numpy as np
 import os
 import json
 
-# 정보 파일 저장 위치: Speech/_data_Project/Project_Name/에 저장됨
+# 정보 파일 저장 위치: Speech/_data_Project/Project_Name/에 저장
 base_path = "D:/Functions/Speech/_data_Project"
 #base_path = "/mnt/d/Functions/Speech/_data_Project"
 
@@ -181,7 +182,7 @@ with open(json_path, "w", encoding="utf-8") as f:
 <br/>
 
 # Audio Preprocessing
-(코드는 `/Free-Speech/Speech/Preprocessing/Audio.py` 참고)\
+(코드는 [`/Free-Speech/Speech/Preprocessing/Audio.py`](../Speech/Preprocessing/Audio.py) 참고)\
 Raw audio → word timestamp 까지
 <br/>
 <br/>
@@ -263,7 +264,7 @@ for i in range(len(FA)):
 f_FA.close()
 ```
 
-이를 한번에 하고자 한다면 `/Free-Speech/Speech/Preprocessing/Audio`의 `Clova_STT(file_path)`를 이용하면 된다.
+이를 한번에 하고자 한다면 [`/Free-Speech/Speech/Preprocessing/Audio.py`](../Speech/Preprocessing/Audio.py)의 `Clova_STT(file_path)`를 이용하면 된다.
 <br/>
 <br/>
 <br/>
@@ -366,7 +367,7 @@ def audiostamp(input, output_folder="./"):
 <br/>
 
 ### All in one
-오디오 전처리를 한 번에 하고자 한다면, `/Free-Speech/speech_3T/audio_preprocessing_allinone.py`를 실행\
+오디오 전처리를 한 번에 하고자 한다면, [`/Free-Speech/speech_3T/audio_preprocessing_allinone.py`](audio_preprocessing_allinone.py)를 실행\
 예시 파일이 있으니 `Free-Speech`폴더 위치에서 실행하면 전처리를 체험해볼 수 있다.\
 내 파일에 맞게 커스텀을 하려면 변수만 수정하면 된다. 단, 오디오 파일명도 bids format을 따라야 한다.
 
