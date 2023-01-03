@@ -1,6 +1,6 @@
 # Free-Speech
 Speech 실험의 A-to-Z\
-해당 repository는 WSL 또는 Ubuntu-20.04 환경에서 제작되었습니다. 
+해당 repository는 WSL(Ubuntu-20.04) 환경에서 제작되었습니다. 
 <br/>
 <br/>
 
@@ -14,23 +14,24 @@ Speech 실험의 A-to-Z\
 <br/>
 
 ## 0. 전체 구성
-`Speech`: python 모듈\
-`speech_3T`: preprocessing & speech_3T DATA\
-`Speech_linux.pth`: 모듈의 경로 설정 파일 (Linux OS)\
-`Speech_window.pth`: 모듈의 경로 설정 파일 (Window OS)
+[`Experiment_Code`](Experiment_Code): 실험 코드\
+[`Speech`](Speech): python 모듈\
+[`speech_3T`](speech_3T): preprocessing & speech_3T DATA\
+[`Speech_linux.pth`](Speech_linux.pth): Speech python 모듈 경로 설정 파일 (Linux OS)\
+[`Speech_window.pth`](Speech_window.pth): Speech python 모듈 경로 설정 파일 (Window OS)
 <br/>
 <br/>
 <br/>
 
 ## 1. 실험 코드
-[Experiment_Code](Experiment_Code)에 각 실험의 코드와 그 설명이 있다.
-- [speech_3T](Experiment_Code/speech_3T): 3T Free Speech 실험 코드
+[`Experiment_Code`](Experiment_Code)에 각 실험의 코드와 그 설명이 있다.
+- [`speech_3T`](Experiment_Code/speech_3T): 3T Free Speech 실험 코드
 <br/>
 <br/>
 <br/>
 
 ## 2. Preprocessing (fMRI, Audio) 해보기
-[speech_3T](speech_3T)의 `README.md`를 참고하자.
+[`speech_3T`](speech_3T)의 `README.md`를 참고하자.
 <br/>
 <br/>
 <br/>
