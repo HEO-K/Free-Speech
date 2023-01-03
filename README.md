@@ -8,7 +8,6 @@ Speech 실험의 A-to-Z\
 0. [전체 구성](##-0.-전체-구성)
 1. [실험 코드](##-1.-실험-코드)
 2. [Preprocessing (fMRI, Audio) 해보기](##-2.-Preprocessing-(fMRI,-Audio)-해보기)
-
 <br/>
 <br/>
 <br/>
