@@ -79,7 +79,7 @@ done
 <br/>
 
 ## 내 데이터에 적용해보기
-내 환경에 맞추어 `Speech/_data_Project/`의 프로젝트 정보를 생성하면 된다.\
+내 환경에 맞추어 `/Free-Speech/Speech/_data_Project/`에 프로젝트 정보를 생성하면 된다.\
 [`Speech/make_project_info.py`](../Speech/make_project_info.py)를 통해 프로젝트 정보를 만들거나, 직접 프로젝트 폴더를 생성해서 `project_info.json`을 만들면 된다.
 
 
