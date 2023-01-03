@@ -24,7 +24,7 @@ Speech 실험의 A-to-Z\
 <br/>
 
 ## 1. 실험 코드
-[`Experiment_Code`](Experiment_Code)에 각 실험의 코드와 그 설명이 있다.
+[`Experiment_Code`](Experiment_Code)에 각 실험의 코드와 그 설명이 있습니다.
 - [`speech_3T`](Experiment_Code/speech_3T): 3T Free Speech 실험 코드
 <br/>
 <br/>
