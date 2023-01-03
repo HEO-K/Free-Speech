@@ -238,7 +238,7 @@ sentences = results['segments']
 ```
 
 ![Clova results](./img/clova_res.png)
-우리는 문장이 아니라 단어별 받아쓰기가 필요함으로 이 중 `words`만 따로 뽑아서 저장하면 된다.
+문장별 받아쓰기가 아니라 단어별 받아쓰기가 필요함으로 이 중 `words`만 따로 뽑아서 저장하면 된다.
 <br/>
 <br/>
 
