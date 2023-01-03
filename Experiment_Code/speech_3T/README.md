@@ -1,14 +1,14 @@
 # 3T Free Speech 실험 코드
 ## 실험 구성
-Free Speech는 다음과 같은 순서로 진행된다.
-0. Sound test
-1. Resting
-2. Speaking Task
+Free Speech는 다음과 같은 순서로 진행된다.  
+1. Sound test
+2. Resting
 3. Speaking Task
-4. T1
-5. Speaking Task
-6. Listening Task
+4. Speaking Task
+5. T1
+6. Speaking Task
 7. Listening Task
+8. Listening Task
 
 그리고 Speaking / Listening Task는 아래와 같은 종류가 있으며 순서는 랜덤이다.
 <br/>
@@ -20,8 +20,7 @@ Free Speech는 다음과 같은 순서로 진행된다.
     - 친구(들)을 최대한 자세히 묘사하기 (외형, 성격, 인간관계 등등).
     - 기억나는 화가 났던 일에 대해 최대한 자세히 회상하기.
 - speechSTROLL: 두 주제에 대해, 각 주제 당 30초~1분 동안 말하는 것을 왔다 갔다 하기 (아래 이미지 참고).
-![speechSTROLL](./instruction/STROLL.jpg)
-<br/>
+![speechSTROLL](./Instruction/STROLL.jpg)
 <br/>
 
 #### Listening Task
@@ -32,7 +31,10 @@ Free Speech는 다음과 같은 순서로 진행된다.
 <br/>
 
 ## 실험 진행 및 결과
-[`TASK_all.m`](./TASK_all.m)을 실행하면 실험의 처음부터 끝까지 진행 가능하다. 알아서 Run순서를 무작위로 섞어준다.\
+[`TASK_all.m`](./TASK_all.m)을 실행하면 실험의 처음부터 끝까지 진행 가능하다. 알아서 Run순서를 무작위로 섞어준다.
+<br/>
+<br/>
+
 **주의**\
 스캐너에서 녹음이 되도록 하려면, 코드를 실행하자마자 출력되는 오디오 장치 정보와 연결된 오디오 장치 정보가 같아야 한다.
 ![device info](./img/audio_device.png)
@@ -49,7 +51,7 @@ Free Speech는 다음과 같은 순서로 진행된다.
 
 <br/>
 
-Task 각각을 실행하려면,\
+Task 각각을 실행하려면,
 - Sound test: [`soundtest.m`](./soundtest.m) 실행 (input 없음).
 - Resting: [`resting.m`](./resting.m) 실행.
     ```Matlab

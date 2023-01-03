@@ -8,9 +8,9 @@
 
 ## 1. bids format 생성
 먼저 CNIR 서버에서 다음 파일을 다운로드 하고 압축을 푼다.
-`3TMRIdata/2022_10/HK_SPEECH_20221004KHY`\
-`preprocessing_allinone.sh`의 dcm2bids 단락의 `input` 변수를 수정하자.
-그리고 이 Free-Speech 폴더 위치에서 해당 단락을 실행.
+[`3TMRIdata/2022_10/HK_SPEECH_20221004KHY`]\
+[`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 dcm2bids 단락의 `input` 변수를 수정하자.
+그리고 이 Free-Speech repository 폴더 위치에서 해당 단락을 실행.
 
 ```bash
 input=압축 푼 폴더 경로
@@ -29,7 +29,7 @@ python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub}
 
 ## 2. fMRIprep
 [fMRIprep 도커](https://fmriprep.org/en/stable/installation.html)를 설치한 뒤,\
-`preprocessing_allinone.sh`의 fMRIprep 단락을 Free-Speech 폴더 위치에서 실행
+[`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 fMRIprep 단락을 Free-Speech repository 폴더 위치에서 실행
 
 ```bash
 subs="001"
@@ -55,7 +55,7 @@ done
 * Detrending 
 * Frequency filtering (bandpass: 0.01 ~ 99999 (Hz))
 * Smoothing (2→3, 2.5→4, 3→5 (mm))\
-`preprocessing_allinone.sh`의 preprocess 단락을 Free-Speech 폴더 위치에서 실행
+[`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 preprocess 단락을 Free-Speech repository 폴더 위치에서 실행
 
 ```bash
 subs="001"
@@ -80,7 +80,7 @@ done
 
 ## 내 데이터에 적용해보기
 내 환경에 맞추어 `Speech/_data_Project/`의 프로젝트 정보를 생성하면 된다.\
-`Speech/make_project_info.py`를 통해 프로젝트 정보를 만들거나, 직접 프로젝트 폴더를 생성해서 `project_info.json`을 만들면 된다.
+[`Speech/make_project_info.py`](../Speech/make_project_info.py)를 통해 프로젝트 정보를 만들거나, 직접 프로젝트 폴더를 생성해서 `project_info.json`을 만들면 된다.
 
 
 ```python
@@ -264,7 +264,7 @@ for i in range(len(FA)):
 f_FA.close()
 ```
 
-이를 한번에 하고자 한다면 [`/Free-Speech/Speech/Preprocessing/Audio.py`](../Speech/Preprocessing/Audio.py)의 `Clova_STT(file_path)`를 이용하면 된다.
+이를 한번에 하고자 한다면 [`/Free-Speech/Speech/Preprocessing/Audio.py`](../Speech/Preprocessing/Audio.py)의 `Clova_STT(file_path)` function을 이용하면 된다.
 <br/>
 <br/>
 <br/>
@@ -368,7 +368,7 @@ def audiostamp(input, output_folder="./"):
 
 ### All in one
 오디오 전처리를 한 번에 하고자 한다면, [`/Free-Speech/speech_3T/audio_preprocessing_allinone.py`](audio_preprocessing_allinone.py)를 실행\
-예시 파일이 있으니 `Free-Speech`폴더 위치에서 실행하면 전처리를 체험해볼 수 있다.\
+예시 파일이 있으니 Free-Speech repository 폴더 위치에서 실행하면 전처리를 체험해볼 수 있다.\
 내 파일에 맞게 커스텀을 하려면 변수만 수정하면 된다. 단, 오디오 파일명도 bids format을 따라야 한다.
 
 ```python
