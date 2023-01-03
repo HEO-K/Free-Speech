@@ -1,5 +1,6 @@
 # Free-Speech
-Speech 실험의 AtoZ
+Speech 실험의 A-to-Z\
+해당 repository는 WSL 또는 Ubuntu-20.04 환경에서 제작되었습니다. 
 <br/>
 
 ## 목차
@@ -15,7 +16,7 @@ Speech 실험의 AtoZ
 `Speech`: python 모듈\
 `speech_3T`: preprocessing & speech_3T DATA\
 `Speech_linux.pth`: 모듈의 경로 설정 파일 (Linux OS)\
-`Speech_window.pth`: 모듈의 경로 설정 파일(Window OS)
+`Speech_window.pth`: 모듈의 경로 설정 파일 (Window OS)
 <br/>
 <br/>
 <br/>
