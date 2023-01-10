@@ -37,7 +37,6 @@ MRIting은 이틀에 걸쳐 진행된다.
 - Introduction 2: 서로 같은 생각을 가진 찬반 주제에 대해 이야기한다.
 - Introduction 3: 서로 상반된 생각을 가진 찬반 주제에 대해 이야기한다.
 <br/>
-<br/>
 
 #### Chatting ([`Ses1_CHATTING.m`](Ses1_CHATTING.m))
 15분 동안 서로 자유롭게 대화한다. 화면에 제시된 주제에 대해 이야기하거나, 자유 주제에 대해 이야기한다.
