@@ -21,11 +21,9 @@
 
 1. 피험자 분의 상태 확인 (speechMC에서는 생략)
 ![check](7T_proj_general_inst_00.png)
-
-MRI에서는 버튼 박스, 외에서는 키보드의 숫자키
 2. 각 실험 instruction
 3. Eyetracking calibration\
-[Calibration 비디오](24points_calibration_40sec_1600x1000.mp4)
+[Calibration 비디오](24points_calibration_40sec_1600x1000.mp4)\
 4. 본 실험\
     4.1. 시작 8초 fixation\
     4.2. 말하기 시작\
