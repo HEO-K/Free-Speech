@@ -23,7 +23,8 @@
 ![check](7T_proj_general_inst_00.png)
 2. 각 실험 instruction
 3. Eyetracking calibration\
-[Calibration 비디오](24points_calibration_40sec_1600x1000.mp4)\
+[Calibration 비디오](24points_calibration_40sec_1600x1000.mp4)
+
 4. 본 실험\
     4.1. 시작 8초 fixation\
     4.2. 말하기 시작\
