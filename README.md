@@ -1,6 +1,7 @@
 # Free-Speech
 Speech 실험의 A-to-Z\
-해당 repository는 WSL(Ubuntu-20.04) 환경에서 제작되었습니다. 
+해당 repository는 WSL(Ubuntu-20.04) 환경에서 제작되었습니다. \
+[WSL 설치](https://n-kwon.notion.site/Windows-Subsystem-for-Linux-abd46c09ce084bbea874fafc9a6cc99f)
 <br/>
 <br/>
 
