@@ -124,7 +124,8 @@ def load_TA(Project, sub, runname, ses=None, TR=None):
         TR (int, optional): TR로 나눠진 TA, Defaults to None.
         
     Returns:
-       
+        - TR=None의 경우: [start, end, word]의 리스트
+        - TR을 준 경우: 한 TR내 [word들]의 리스트
     """
     
     from . import load_project_info
@@ -164,4 +165,5 @@ def load_TA(Project, sub, runname, ses=None, TR=None):
         for i in range(len(TRs)-1):
             TA_words.append(list(words[(word_start>=TRs[i])&(word_start<TRs[i+1])]))
         return(TA_words)    
-            
+
+
