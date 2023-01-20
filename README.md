@@ -14,6 +14,7 @@ Speech 실험의 A-to-Z\
 <br/>
 
 ## 0. 전체 구성
+[`Analysis_Code`](Analysis_Code): 분석 코드\
 [`Experiment_Code`](Experiment_Code): 실험 코드\
 [`Speech`](Speech): python 모듈\
 [`speech_3T`](speech_3T): preprocessing & speech_3T DATA\
@@ -38,4 +39,7 @@ Speech 실험의 A-to-Z\
 <br/>
 <br/>
 
-## 3. 
+## 3. 분석 코드
+[`Analysis_Code`](Analysis_Code)에 각 실험의 코드 노트북이 있습니다.
+- [`Keyword modeling`](Analysis_Code/Keyword_modeling.ipynb): 오디오 녹음으로부터 키워드 벡터 뽑아내기
+- [`Topic boundary effect`](Analysis_Code/Topic_boundary_effect.ipynb): 주제 변환 시점의 boundary effect 확인하기
