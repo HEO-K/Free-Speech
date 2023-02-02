@@ -95,7 +95,7 @@ def etri_spokentagger(input, wordlevel=False, stopwords=True):
         try:
             results = results + json.loads(response_results)['return_object']['sentence']
         except: print(json.loads(response_results))
-        time.sleep(0.1)
+        time.sleep(0.2)
     tagged_results = []
     
     
@@ -187,9 +187,11 @@ def etri_dparse(input):
         except: print(json.loads(response_results))
         
         # 너무 빠르게 돌리면 오류뜸
-        time.sleep(0.1)
+        time.sleep(0.2)
     
     return results 
+
+
 
 
 
@@ -220,7 +222,12 @@ def keyword_extraction(model, input_lines:list, filtered_lines:list,
     n_gram_range = (min_n, max_n)  # 키워드(구)를 만들 수 있는 단어 개수
     key_embed = np.empty((0,768))
     for i in range(len(filtered_lines)):
-        try:
+        if len(filtered_lines[i]) == 0:
+            if print_keywords: print("no candidate, just return NO keyword")
+            result = []
+            for n in range(top_keywords):
+                result.append(["", 0])
+        else:
             count = CountVectorizer(ngram_range=n_gram_range).fit([" ".join(set(filtered_lines[i]))]) 
             candidates = count.get_feature_names_out()  # 모든 단어 조합 -> keyword candidate
             doc_embedding = model.encode(input_lines[i])  # 원본 문장 embedding
@@ -251,8 +258,6 @@ def keyword_extraction(model, input_lines:list, filtered_lines:list,
             keyword = candidates[keywords_idx]
             if print_keywords: print(keyword)
             
-            keyword_vec = []
-            for word in keyword: keyword_vec.append(model.encode(word))
             
             # 그 유사도 값
             score = np.array(word_doc_sim[keywords_idx])
@@ -260,14 +265,12 @@ def keyword_extraction(model, input_lines:list, filtered_lines:list,
             
             result = []
             for n in range(top_keywords):
-                result.append([keyword[n], score[n][0]])
+                try: result.append([keyword[n], score[n][0]])
+                except: result.append(["", 0])
                 
             
-        except:
-            print("no candidate, just return NO keyword")
-            result = []
-            for n in range(top_keywords):
-                result.append(["", 0])
+
         results.append(np.array(result, dtype='object'))
+        
         
     return results

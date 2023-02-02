@@ -181,7 +181,7 @@ def get_MNI(voxel_size, mask=True):
 
 
 # atlas averaging
-def parcel_averaging(parcel, epi, size='3'):
+def parcel_averaging(parcel, epi, size='3.0'):
     """ 각 parcel별 평균 timeseries
 
     Args:

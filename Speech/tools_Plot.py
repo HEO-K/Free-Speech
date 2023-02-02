@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -91,4 +92,46 @@ def plot_3d_render(mask, data, view_angle=[30,45], **kwargs):
         ax.view_init(view_angle[0], view_angle[1]) 
         
     return(ax)
+
+
+
+def plot_roi(atlas_name, rois, rgba, **kwargs):
+    """ roi를 pycortex로 원하는 색으로 plot
     
+    Args:
+        atlas_name (str): atlas 이름 
+            - "Brainnetome"
+            - "Schaefer2018_<N>Parcels_<7/17>Networks"
+            - "Yeo2011_<7/17>Networks"
+        rois (double list): roi 번호 ex) [roi1:[101,102], roi2:[201,202]...]
+        rgba (double list): RGBA 값 (0~255) ex) [roi1:[r,g,b,a], roi2:[r,g,b,a]...]
+        **kwargs: cortex.Volume 변수들
+        
+    Returns:
+        pycortex volume data
+    """
+    
+    from Speech.tools_EPI import get_atlas   
+    import cortex
+    
+    atlas = get_atlas(atlas_name)[1]
+    r_map = np.zeros(atlas.shape).astype(np.uint8)
+    g_map = np.zeros(atlas.shape).astype(np.uint8)
+    b_map = np.zeros(atlas.shape).astype(np.uint8)
+    a_map = np.zeros(atlas.shape).astype(np.uint8)
+    
+    for roi, color in zip(rois, rgba):
+        for r in roi:
+            r_map[atlas==r] = color[0]
+            g_map[atlas==r] = color[1]
+            b_map[atlas==r] = color[2]
+            a_map[atlas==r] = color[3]
+            
+    red = cortex.Volume(r_map.transpose(2,1,0),"cvs_avg35_inMNI152", 'mni_3mm')
+    green = cortex.Volume(g_map.transpose(2,1,0),"cvs_avg35_inMNI152", 'mni_3mm')
+    blue = cortex.Volume(b_map.transpose(2,1,0),"cvs_avg35_inMNI152", 'mni_3mm')
+    vol_data = cortex.VolumeRGB(red, green, blue, "cvs_avg35_inMNI152", 'mni_3mm', 
+                                alpha=a_map.transpose(2,1,0), **kwargs)
+    
+    cortex.webshow(vol_data)
+# %%

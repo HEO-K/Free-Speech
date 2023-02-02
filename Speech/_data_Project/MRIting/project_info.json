@@ -1,0 +1,61 @@
+{
+    "Name": "MRIting",
+    "bids_path": "/mnt/d/MRIting/_DATA_fMRI",
+    "bids_path_window": "D:/MRIting/_DATA_fMRI",
+    "ses-1": [
+        {
+            "name": "RATING",
+            "runs": 6
+        },
+        {
+            "name": "INTRO",
+            "runs": 3
+        },
+        {
+            "name": "CHATTING"
+        },
+        {
+            "name": "T1"
+        },
+        {
+            "name": "UNI"
+        },
+        {
+            "name": "INV1"
+        },
+        {
+            "name": "INV2"
+        },
+        {
+            "name": "TRUTHLIE"
+        }
+    ],
+    "ses-2": [
+        {
+            "name": "RECALL",
+            "runs": 3
+        },
+        {
+            "name": "RESTING"
+        },
+        {
+            "name": "SPEECH"
+        },
+        {
+            "name": "T1"
+        },
+        {
+            "name": "UNI"
+        },
+        {
+            "name": "INV1"
+        },
+        {
+            "name": "INV2"
+        },
+        {
+            "name": "MOVIE",
+            "runs": 3
+        }
+    ]
+}

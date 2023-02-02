@@ -80,8 +80,8 @@ def check_dcm(Project, input_path, ses = None):
             runname_upper = runname.upper()
         check_results[runname] = []
         for run in runs:
-            if runname_upper == run.split("_")[0]:  # name_index의 형태이므로, 만약 아예 겹치는 이름이 없다면 아래가 나음
-            # if runname in run:
+            # if runname_upper == run.split("_")[0]:  # name_index의 형태이므로, 만약 아예 겹치는 이름이 없다면 아래가 나음
+            if runname in run:
                 check_results[runname].append(run)
     for run in check_results.keys():
         if len(check_results[run]) > 1:

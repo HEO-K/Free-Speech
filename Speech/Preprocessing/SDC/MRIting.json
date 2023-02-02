@@ -1,0 +1,14 @@
+{
+    "bids_path": "/mnt/d/MRIting/_DATA_fMRI",
+    "raw_path": "/mnt/d/MRIting/_DATA_fMRI_raw",
+    "vox_size": 3.0,
+    "EPI_x": 80,
+    "EPI_y": 80,
+    "EPI_z": 48,
+    "ref_x": 80,
+    "ref_y": 80,
+    "ref_z": 48,
+    "PAT": 3,
+    "dwell": 0.00056,
+    "dTE": 3
+}

@@ -148,7 +148,7 @@ def load_sentence(Project, sub, runname, ses=None):
        list: 문장으로 이뤄져 있는 리스트
     """
     from . import load_project_info
-    audio_path = load_project_info.get_audio_path(Project,derivatives=False)
+    audio_path = load_project_info.get_audio_path(Project,derivatives=True)
     audio_path = os.path.join(audio_path, "sub-"+sub)
     if ses != None:
         audio_path = os.path.join(audio_path, "ses-"+str(ses))
