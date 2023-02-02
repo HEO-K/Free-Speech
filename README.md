@@ -16,6 +16,7 @@ Speech 실험의 A-to-Z\
 ## 0. 전체 구성
 [`Analysis_Code`](Analysis_Code): 분석 코드\
 [`Experiment_Code`](Experiment_Code): 실험 코드\
+[`MRIting`](MRIting): MRIting 전용 전처리\
 [`Speech`](Speech): python 모듈\
 [`speech_3T`](speech_3T): preprocessing & speech_3T DATA\
 [`Speech_linux.pth`](Speech_linux.pth): Speech python 모듈 경로 설정 파일 (Linux OS)\
@@ -43,3 +44,10 @@ Speech 실험의 A-to-Z\
 [`Analysis_Code`](Analysis_Code)에 각 실험의 코드 노트북이 있습니다.
 - [`Keyword modeling`](Analysis_Code/Keyword_modeling.ipynb): 오디오 녹음으로부터 키워드 벡터 뽑아내기
 - [`Topic boundary effect`](Analysis_Code/Topic_boundary_effect.ipynb): 주제 변환 시점의 boundary effect 확인하기
+<br/>
+<br/>
+<br/>
+
+## 4. MRIting
+MRIting 전용 fMRI, audio preprocessing\
+[`MRIting`](MRIting)의 `README.md`를 참고하자.
