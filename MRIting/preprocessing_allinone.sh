@@ -1,10 +1,10 @@
 ################# 3T dcm2bids #######################
 mri=3T
 project=MRIting
-input=/mnt/c/Users/Kwon/Downloads/20230201_MRITING_JYS_JYS/
+input=압축_푼_ima폴더
 sub=0302
 ses=2
-script_path=/mnt/d/Functions/Speech/Preprocessing
+script_path=/Free-Speech/Speech/Preprocessing
 python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub} --ses ${ses}
 
 
@@ -14,20 +14,20 @@ python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub} --ses ${ses}
 # /usr/local/MATLAB/R2021b/bin/activate_matlab.sh
 mri=7T
 project=MRIting
-input=/mnt/c/Users/Kwon/Downloads/20220131_JYS_MRITING
+input=압축_푼_ima폴더
 sub=0302
 ses=1
-script_path=/mnt/d/Functions/Speech/Preprocessing
+script_path=/Free-Speech/Speech/Preprocessing
 python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub} --ses ${ses}
 if [ $mri = 7T ]
 then
-    python /mnt/d/MRIting/7T.py ${project} ${input} ${sub} --ses ${ses}
+    python /Free-Speech/MRIting/7T.py ${project} ${input} ${sub} --ses ${ses}
 fi
 
 
 ################# fMRIprep #######################
 subs="0302"
-bids_path=/mnt/d/MRIting/_DATA_fMRI
+bids_path=/Free-Speech/MRIting/_DATA_fMRI
 
 for sub in $subs
 do
@@ -36,10 +36,10 @@ done
 
 
 
-################# preprocess #####################
+################# after prep ######################
 subs="0302"
 project=MRIting
-script_path=/mnt/d/Functions/Speech/Preprocessing
+script_path=/Free-Speech/Speech/Preprocessing
 ses=1
 for sub in $subs
 do
