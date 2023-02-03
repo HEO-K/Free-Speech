@@ -13,14 +13,20 @@ Speech 실험의 A-to-Z\
 <br/>
 <br/>
 
-## 0. 전체 구성
-[`Analysis_Code`](Analysis_Code): 분석 코드\
-[`Experiment_Code`](Experiment_Code): 실험 코드\
-[`MRIting`](MRIting): MRIting 전용 전처리\
-[`Speech`](Speech): python 모듈\
-[`speech_3T`](speech_3T): preprocessing & speech_3T DATA\
-[`Speech_linux.pth`](Speech_linux.pth): Speech python 모듈 경로 설정 파일 (Linux OS)\
-[`Speech_window.pth`](Speech_window.pth): Speech python 모듈 경로 설정 파일 (Window OS)
+## 0. 전체 구성 및 간단 사용법
+- [`Analysis_Code`](Analysis_Code): 분석 코드\
+- [`Experiment_Code`](Experiment_Code): 실험 코드\
+- [`MRIting`](MRIting): MRIting 전용 전처리\
+- [`Speech`](Speech): python 모듈\
+- [`speech_3T`](speech_3T): preprocessing & speech_3T DATA\
+- [`Speech_linux.pth`](Speech_linux.pth): Speech python 모듈 경로 설정 파일 (Linux OS)\
+- [`Speech_window.pth`](Speech_window.pth): Speech python 모듈 경로 설정 파일 (Window OS)
+
+__사용법__
+1. 이 github repository를 다운로드
+2. Speech 모듈을 사용해야 하므로 `Speech_OS.pth`를 자신의 컴퓨터에 맞게 수정한다. ([`Speech_linux.pth`](Speech_linux.pth) 내용 참고.)
+3. `Speech/_data_Poject/자신의_프로젝트`의 project_info.json의 bids_path를 자신의 컴퓨터에 맞게 수정한다.
+    ex) `MRIting`의 preprocessing을 따라 하고 싶다면, [`Speech/_data_Project/MRIting/project_info.json`](Speech/_data_Project/MRIting/project_info.json)의 bids_path를 자신의 컴퓨터 상에서의 `/Free-Speech/MRIting/_DATA_fMRI`로 수정해야 한다.
 <br/>
 <br/>
 <br/>

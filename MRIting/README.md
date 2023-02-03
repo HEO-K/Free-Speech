@@ -17,7 +17,11 @@ dcm2bids_scaffold
 ```
 
 
-원하는 ima 데이터를 받고 압축을 푼 다음, [`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 dcm2bids단락을 실행한다. 단 3T와 7T인지 확인하고 맞는 단락을 실행해야 한다.
+원하는 ima 데이터를 받고 압축을 푼 다음, [`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 dcm2bids단락을 실행한다. 단 3T와 7T인지 확인하고 맞는 단락을 실행해야 한다.\
+예시 파일) sub-0302의 파일은 서버에서
+- ses-1 (7T): `CNIR05/7TMRIdata/2023_01/20230131_JYS_MRITING`
+- ses-2 (3T): `CNIR05/3TMRIdata/2023_02/20230201_JYS_MRITING`
+
 
 ```bash
 ################# 3T dcm2bids #######################
