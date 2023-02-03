@@ -1,5 +1,5 @@
 # MRIting Preprocessing
-(코드는 [`/Free-Speech/Speech/Preprocessing/EPI.py`](../Speech/Preprocessing/EPI.py) 참고)\
+(코드는 [`/Free-Speech/Speech/Preprocessing/EPI.py`](../Speech/Preprocessing/EPI.py) 참고)
 
 3T와 다른 점
 - 7T EPI SDC 
@@ -15,6 +15,7 @@
 ```bash
 dcm2bids_scaffold
 ```
+
 
 원하는 ima 데이터를 받고 압축을 푼 다음, [`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 dcm2bids단락을 실행한다. 단 3T와 7T인지 확인하고 맞는 단락을 실행해야 한다.
 
@@ -51,7 +52,7 @@ fi
 
 ## 2. fMRIprep
 [fMRIprep 도커](https://fmriprep.org/en/stable/installation.html)를 설치한 뒤,\
-[`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 fMRIprep 단락을 실행한다.\
+[`preprocessing_allinone.sh`](./preprocessing_allinone.sh)의 fMRIprep 단락을 실행한다.
 
 __단, 3T & 7T 모두 bids format 처리가 되어있어야 한다.__
 
