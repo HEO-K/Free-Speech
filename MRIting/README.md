@@ -69,7 +69,7 @@ done
 ```
 
 실행이 되지 않을 경우 `fmriprep-docker` 실행 변수를 자신의 컴퓨터 환경에 맞게 수정하자.
-다음 단계로 넘어가기 전에 `speech_3T/_DATA_fMRI/derivatives/sub-.html`을 보고 prep이 잘 되었나 확인하자.
+다음 단계로 넘어가기 전에 `/Free-Speech/MRIting/_DATA_fMRI/derivatives/sub-.html`을 보고 prep이 잘 되었나 확인하자.
 <br/>
 <br/>
 <br/>
