@@ -64,6 +64,8 @@ def etri_spokentagger(input, wordlevel=False, stopwords=True):
     
     
     # 만약 글자수가 5000자 이상이면, 여러번 나눠서 해야 한다. 문장(온점, ". ") 단위로 쪼갠다.
+    input = input.strip()
+    if input[-1] == ".": input = input[:-1]
     input_sent = input.split(". ")
     sent_tmp = ''
     input_split = []
@@ -228,7 +230,7 @@ def keyword_extraction(model, input_lines:list, filtered_lines:list,
             for n in range(top_keywords):
                 result.append(["", 0])
         else:
-            count = CountVectorizer(ngram_range=n_gram_range).fit([" ".join(set(filtered_lines[i]))]) 
+            count = CountVectorizer(ngram_range=n_gram_range,token_pattern=r"(?u)\b\w+\b").fit([" ".join(set(filtered_lines[i]))])
             candidates = count.get_feature_names_out()  # 모든 단어 조합 -> keyword candidate
             doc_embedding = model.encode(input_lines[i])  # 원본 문장 embedding
             candidate_embeddings = model.encode(candidates)   # keyword candidate embedding

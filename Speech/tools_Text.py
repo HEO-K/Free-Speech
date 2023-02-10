@@ -222,4 +222,53 @@ def load_FA(Project, sub, runname, ses=None, TR=None):
 
 
 
-# %%
+def get_phrase_FA(Project, sub, runname, ses=None):
+    """ 절 단위의 FA 
+
+    Args:
+        Project (str): 프로젝트명
+        sub (str): sub number
+        runname (str): task이름, ex) speechTOPIC_run-1
+        ses (str or int, optional): session number, Defaults to None.
+        
+    Returns:
+        [start, end, phrase]의 리스트
+
+    """
+    
+    from .tools_NLP import etri_dparse
+    text = " ".join(load_sentence(Project, sub, runname, ses=ses))
+    FA = load_FA(Project, sub, runname, ses=ses, TR=None)
+    
+    # 문장 구조 분석
+    dparse_results = etri_dparse(text)
+    
+    phrase_FA = []
+    line_start = 0
+    for line in dparse_results:
+        word_index = np.arange(len(line["word"]))+line_start
+        words = [word["text"] for word in line["word"]]
+        phrase_begin = 0
+        for phrase_tag in line['phrase_dependency']:
+            if phrase_tag['label'] == "S":   # 문장 태그
+                phrase = " ".join(words[phrase_begin:phrase_tag['end']+1])   # 절
+                phrase_timestamp = [FA[word_index[phrase_begin]][0], FA[word_index[phrase_tag['end']]][1]]
+                phrase_FA.append(phrase_timestamp+[phrase])
+
+                # 절 시작 업데이트
+                phrase_begin = phrase_tag['end']+1
+        
+        
+        # 결과가 단 하나의 문장으로만 이뤄진 경우 'S'라벨이 없다 -> 그냥 추가
+        if len(phrase_FA) < 1:
+            phrase = " ".join(words[phrase_begin:])
+            phrase_timestamp = [FA[word_index[phrase_begin]][0], FA[word_index[-1]][1]]
+            phrase_FA.append(phrase_timestamp+[phrase])
+        elif phrase_FA[-1][-1].split()[-1] != words[-1]:
+            phrase = " ".join(words[phrase_begin:])
+            phrase_timestamp = [FA[word_index[phrase_begin]][0], FA[word_index[-1]][1]]
+            phrase_FA.append(phrase_timestamp+[phrase])           
+        # 현재 줄의 단어 인덱스 업데이트
+        line_start += len(line["word"])
+    
+    return(phrase_FA)

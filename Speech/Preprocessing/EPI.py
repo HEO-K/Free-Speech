@@ -522,7 +522,18 @@ def sc_dt_hp_sm(Project, sub, runname, ses=None):
     
     
 ##################################### 7T #####################################
-def SDC(Project, ima_path, sub, ses=None, gre_name="*GRE*", replace=True):
+def SDC(Project, ima_path, sub, ses=None, gre_name="*GRE*", replace=True, sudo=False):
+    """ SDC 
+
+    Args:
+        Project (str): 프로젝트 이름
+        ima_path (str): raw 경로
+        sub (str): 피험자 번호
+        ses (str): 세션 번호. Defaults to None.
+        gre_name (str, optional): GRE 프로토콜 이름 indicator. Defaults to "*GRE*".
+        replace (bool, optional): bids bold.nii를 SDC결과로 대체할 지 여부. Defaults to True.
+        sudo (bool, optional): Matlab 루트 실행 권한. Defaults to False.
+    """
     from Speech.tools import isWSL
     if not isWSL(): return("Change WSL")
     
@@ -594,12 +605,20 @@ def SDC(Project, ima_path, sub, ses=None, gre_name="*GRE*", replace=True):
     dwell = project_info['dwell']
     dTE = project_info['dTE']
 
-    sdc_script = os.path.join(os.path.dirname(__file__), "SDC/SDC.m")
+
+    if sudo:
+        sdc_script = os.path.join(os.path.dirname(__file__), "SDC/SDC_su.m")
+    else:
+        sdc_script = os.path.join(os.path.dirname(__file__), "SDC/SDC.m")
     os.chdir(raw_path)
     sp.call(f"cd {raw_path}", shell=True)
     sp.call(f"cp -r {sdc_script} ./", shell=True)
-    sp.call(f'matlab -nodesktop -nodisplay -r "SDC({vox_size}, {EPI_x}, {EPI_y}, {EPI_z}, {ref_x}, {ref_y}, {ref_z}, {PAT}, {dwell}, {dTE}); quit"',
-            shell=True)
+    if sudo:
+        sp.call(f'sudo matlab -nodesktop -nodisplay -r "SDC_su({vox_size}, {EPI_x}, {EPI_y}, {EPI_z}, {ref_x}, {ref_y}, {ref_z}, {PAT}, {dwell}, {dTE}); quit"',
+                shell=True)
+    else:
+        sp.call(f'matlab -nodesktop -nodisplay -r "SDC({vox_size}, {EPI_x}, {EPI_y}, {EPI_z}, {ref_x}, {ref_y}, {ref_z}, {PAT}, {dwell}, {dTE}); quit"',
+                    shell=True)
     
     # 파일 대체 
     if replace:

@@ -1,2 +1,3 @@
-# anaconda3/envs/*/lib/python*/site-packages에 추가
-/mnt/d/Functions
+# your_path_of_anaconda/anaconda3/envs/env_name/lib/python*/site-packages/ 위치에 이 파일을 복사
+
+Free-Speech/Speech    # 여기에는 /Free-Speech/Speech 폴더의 경로를 작성
