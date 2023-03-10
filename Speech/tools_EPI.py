@@ -122,7 +122,7 @@ def masking(epi, mask, mask_number=1):
 
 
 # get atlas information
-def get_atlas(name:str, size='3.0'):
+def get_atlas(name:str, size='3.0', mni_coordinates=False):
     """ Atlas 정보와 그 파일 불러오기
 
     Args:
@@ -130,51 +130,70 @@ def get_atlas(name:str, size='3.0'):
             - "Brainnetome"
             - "Schaefer2018_<N>Parcels_<7/17>Networks"
             - "Yeo2011_<7/17>Networks"
-        size (number, optional): 복셀 크기(mm). Defaults to 3mm.
+        size (int, optional): 복셀 크기(mm). Defaults to 3mm.
+        coordinates (bool, optional): parcel의 MNI 좌표. Defaults to False.
 
     Returns: 
         [info, data]
-            - info: string array[:,(index,name)]
+            - info: string array of [index,name,(x,y,z)]     
             - data: nii data array
     """
     # get information
     base_path = os.path.dirname(__file__)
     
     file_base = os.path.join(base_path, "_data_Atlas", name)
-    info_file = glob.glob(os.path.join(file_base, "*.txt"))[0]
+    info_file = glob.glob(os.path.join(file_base, name+".txt"))[0]
     info = []
+    
+    if mni_coordinates:
+        import pandas as pd
+        coor_file = glob.glob(os.path.join(file_base, name+"_coordinates.csv"))[0]
+        coor_data = np.array(pd.read_csv(coor_file))
+        coor_label = coor_data[:,0]
+        
     with open(info_file, 'r', encoding="utf-8") as f:
         lines = f.readlines()
         for line in lines:
             line = line.strip()
             if line[0] == "0": pass
             else:
-                info.append([int(line.split()[0]), line.split()[1]])
+                if mni_coordinates:
+                    coordinate = list(coor_data[coor_label==int(line.split()[0]),1:][0])
+                    info.append([int(line.split()[0]), line.split()[1]]+coordinate)
+                else:
+                    info.append([int(line.split()[0]), line.split()[1]])
     info = np.array(info)
     
-    nii_file = glob.glob(os.path.join(file_base, "*"+str(size)+"mm.nii*"))[0]
+    nii_file = glob.glob(os.path.join(file_base, name+"_"+str(size)+"mm.nii*"))[0]
     data = np.array(nib.load(nii_file).get_fdata())
 
+    
+            
 
     return([info, data])
 
 
 # MNI 불러오기
-def get_MNI(voxel_size, mask=True):
+def get_MNI(voxel_size, option=None):
     """ MNI 데이터 불러오기
 
     Args:
         voxel_size (str): 복셀 크기.
-        mask (bool, optional): 마스크 or Raw. Defaults to True.
-        
+        option (str, optional): 옵션. Defaults to None.
+            - "mask": brain mask
+            - "wm": white matter
+            - "gm": grey matter
+            - "csf": cerebrospinal fluid
+            - "seg": results of fsl FAST
+
     Returns: 
         MNI array
     """
     mni_filename = "MNI_"+str(voxel_size)+"mm"
-    if mask: mni_filename = mni_filename+"_mask"
-
+    if option!=None: 
+        mni_filename = mni_filename+"_"+str(option)
     base = os.path.dirname(__file__)
-    mni_path = glob.glob(os.path.join(base, "_data_Atlas", "MNI", mni_filename+"*"))[0]
+    mni_path = glob.glob(os.path.join(base, "_data_Atlas", "MNI", mni_filename+".nii.gz"))[0]
     mni = np.array(nib.load(mni_path).get_fdata())
     return mni
 

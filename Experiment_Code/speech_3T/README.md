@@ -14,18 +14,18 @@ Free Speech는 다음과 같은 순서로 진행된다.
 <br/>
 
 #### Speaking Task
-- speechFREE: 10분 동안 주제 없이 자유롭게 말하기.
-- speechTOPIC: 아래 세 주제에 대해 최대 20분 동안 말하기.
+- Think aloud: 10분 동안 주제 없이 자유롭게 말하기.
+- Three topics: 아래 세 주제에 대해 최대 20분 동안 말하기.
     - 사형 제도를 찬성하는가? 그 이유는?
     - 친구(들)을 최대한 자세히 묘사하기 (외형, 성격, 인간관계 등등).
     - 기억나는 화가 났던 일에 대해 최대한 자세히 회상하기.
-- speechSTROLL: 두 주제에 대해, 각 주제 당 30초~1분 동안 말하는 것을 왔다 갔다 하기 (아래 이미지 참고).
-![speechSTROLL](./Instruction/STROLL.jpg)
+- Zig-zag: 두 주제를 왔다 갔다 하면서 이야기 (아래 이미지 참고).
+![Zig-zag](./Instruction/STROLL.jpg)
 <br/>
 
 #### Listening Task
-- ListeningFREE: speechFREE를 모사한 사전 녹음을 듣기
-- ListeningTOPIC: speechTOPIC을 모사한 사전 녹음을 듣기
+- TA listening: Think aloud를 모사한 사전 녹음을 듣기
+- 3 listening: Three topics을 모사한 사전 녹음을 듣기
 <br/>
 <br/>
 <br/>
@@ -64,9 +64,9 @@ Task 각각을 실행하려면,
     speech(subName, runName, listen)
     % subName: subject 이름 (결과 파일에 반영됨)
     % runName
-    %     - "1": speechFREE
-    %     - "2": speechTOPIC
-    %     - "3": speechSTROLL
+    %     - "1": think aloud
+    %     - "2": three topics
+    %     - "3": zig-zag
     % listen: 1이면 scanner, 2이면 외부
     ```
 - Listening task: [`listening.m`](./listening.m) 실행.
@@ -74,7 +74,7 @@ Task 각각을 실행하려면,
     speech(subName, runName, listen)
     % subName: subject 이름 (결과 파일에 반영됨)
     % runName
-    %     - "1": listeningFREE
-    %     - "2": listeningTOPIC
+    %     - "1": TA listening
+    %     - "2": 3 listening
     % listen: 1이면 scanner, 2이면 외부
     ```
