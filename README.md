@@ -11,7 +11,7 @@ Speech 실험의 A-to-Z\
 2. [Preprocessing (fMRI, Audio) 해보기](#2-preprocessing-fmri-audio-해보기)
 3. [분석 코드](#3-분석-코드)
 4. [MRIting](#4-mriting)
-5. [NatPAC](#5-natpac-dcm2bids)
+5. [NatPAC dcm2bids](#5-natpac-dcm2bids)
 <br/>
 <br/>
 <br/>
