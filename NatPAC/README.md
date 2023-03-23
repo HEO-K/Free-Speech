@@ -54,7 +54,7 @@ python3 ${script_path}/run_dcm2bids.py ${sub} ${ses}
     - 정보는 있지만 run을 시행하지 않은 경우 경고문이 뜬다.
     ![omitted](./img/omit.png)
     - 마지막으로 매칭 결과를 출력한다.
-    ![matching_results](./img/matching_results.png)
-3. `bids_path/tmp_dcm2bids`에 config 파일 생성 ([`예시`](./sub-007_ses-01_config.json))
-4. `dcm2bids` 실행
+    ![matching_results](./img/match_results.png)
+3. `bids_path/tmp_dcm2bids`에 config 파일 생성 ([예시](./sub-007_ses-01_config.json))
+4. `dcm2bids` 실행//
     ![dcm2bids](./img/dcm2bids.png)
