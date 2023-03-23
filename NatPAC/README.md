@@ -5,7 +5,7 @@ CNIR 서버에서 NatPAC 데이터 bids서식화
 <br/>
 
 ## 1. 서버에 파일 업로드
-CNIR05에서 피험자 폴더 자체를 다운받는다.
+CNIR05에서 피험자 폴더 자체를 다운받는다.//
 ![download](./img/download.png)
 <br/>
 
