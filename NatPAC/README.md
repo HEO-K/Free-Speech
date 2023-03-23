@@ -5,7 +5,9 @@ CNIR 서버에서 NatPAC 데이터 bids서식화
 <br/>
 
 ## 1. 서버에 파일 업로드
-CNIR05에서 피험자 폴더 자체를 다운받는다.//
+CNIR05에서 피험자 폴더 자체를 다운받는다.
+
+
 ![download](./img/download.png)
 <br/>
 
@@ -56,5 +58,7 @@ python3 ${script_path}/run_dcm2bids.py ${sub} ${ses}
     - 마지막으로 매칭 결과를 출력한다.
     ![matching_results](./img/match_results.png)
 3. `bids_path/tmp_dcm2bids`에 config 파일 생성 ([예시](./sub-007_ses-01_config.json))
-4. `dcm2bids` 실행//
+4. `dcm2bids` 실행
+
+
     ![dcm2bids](./img/dcm2bids.png)
