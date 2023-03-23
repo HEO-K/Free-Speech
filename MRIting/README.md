@@ -24,30 +24,24 @@ dcm2bids_scaffold
 
 
 ```bash
-################# 3T dcm2bids #######################
-mri=3T
-project=MRIting
-input=압축_푼_ima폴더
-sub=0302
-ses=2
-script_path=/Free-Speech/Speech/Preprocessing
-python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub} --ses ${ses}
+################# dcm2bids #######################
+# check sub & ima folder
+sub=0502
+ses1_input=/mnt/c/Users/Kwon/Downloads/20230314_MRITING_BKR_BKR/
+ses2_input=/mnt/c/Users/Kwon/Downloads/20230315_MRITING_BKR_BKR/
 
 
-################# 7T dcm2bids #######################
-# 돌리려면 matlab 필요
-# /usr/local/MATLAB/R2021b/bin/activate_matlab.sh
-mri=7T
+# other param
 project=MRIting
-input=압축_푼_ima폴더
-sub=0302
-ses=1
-script_path=/Free-Speech/Speech/Preprocessing
-python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub} --ses ${ses}
-if [ $mri = 7T ]
-then
-    python /Free-Speech/MRIting/7T.py ${project} ${input} ${sub} --ses ${ses}
-fi
+script_path=/mnt/d/Functions/Speech/Preprocessing
+
+
+#### dcm2bids
+# session 1
+python ${script_path}/dcm2bids_all.py ${project} ${ses1_input} ${sub} --ses 1
+
+# session 2
+python ${script_path}/dcm2bids_all.py ${project} ${ses2_input} ${sub} --ses 2
 ```
 
 <br/>
@@ -63,13 +57,10 @@ __단, 3T & 7T 모두 bids format 처리가 되어있어야 한다.__
 
 ```bash
 ################# fMRIprep #######################
-subs="0302"
-bids_path=/Free-Speech/MRIting/_DATA_fMRI  # 1에서 만든 bids path
-
-for sub in $subs
-do
-fmriprep-docker ${bids_path} ${bids_path}/derivatives participant --participant-label ${sub}  --fs-license-file ~/freesurfer/license.txt --skip_bids_validation --ignore slicetiming
-done
+#### fmriprep
+sub=0502
+bids_path=/mnt/d/MRIting/_DATA_fMRI
+fmriprep-docker ${bids_path} ${bids_path}/derivatives participant --participant-label ${sub}  --n_cpus 8 --fs-license-file ~/freesurfer/license.txt --skip_bids_validation
 ```
 
 실행이 되지 않을 경우 `fmriprep-docker` 실행 변수를 자신의 컴퓨터 환경에 맞게 수정하자.

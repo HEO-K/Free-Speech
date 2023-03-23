@@ -7,31 +7,38 @@
     "info": [
         {
             "name": "REST",
-            "datatype": "func"
+		"type": "func",
+		"modality": "bold" 
         },
         {
             "name": "speechFREE",
-            "datatype": "func"
+		"type": "func",
+		"modality": "bold" 
         },
         {
             "name": "speechTOPIC",
-            "datatype": "func"
+		"type": "func",
+		"modality": "bold" 
         },
         {
             "name": "speechSTROLL",
-            "datatype": "func"
+		"type": "func",
+		"modality": "bold" 
         },
         {
             "name": "listeningFREE",
-            "datatype": "func"
+		"type": "func",
+		"modality": "bold" 
         },
         {
             "name": "listeningTOPIC",
-            "datatype": "func"
+		"type": "func",
+		"modality": "bold" 
         },
         {
             "name": "T1",
-            "datatype": "anat"
+		"type": "anat",
+		"modality": "T1w"
         }
     ]
 }

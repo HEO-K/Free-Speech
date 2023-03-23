@@ -1,0 +1,74 @@
+{
+    "descriptions": [
+        {
+            "dataType": "fmap",
+            "modalityLabel": "magnitude1",
+            "customLabels": "acq-GRE",
+            "criteria": {
+                "SeriesNumber": 6,
+                "SidecarFilename": "*e1*"
+            },
+            "intendedFor": [
+                5
+            ]
+        },
+        {
+            "dataType": "fmap",
+            "modalityLabel": "magnitude2",
+            "customLabels": "acq-GRE",
+            "criteria": {
+                "SeriesNumber": 6,
+                "SidecarFilename": "*e2*"
+            },
+            "intendedFor": [
+                5
+            ]
+        },
+        {
+            "dataType": "fmap",
+            "modalityLabel": "phase1",
+            "customLabels": "acq-GRE",
+            "criteria": {
+                "SeriesNumber": 7,
+                "SidecarFilename": "*e1_ph*"
+            },
+            "intendedFor": [
+                5
+            ]
+        },
+        {
+            "dataType": "fmap",
+            "modalityLabel": "phase2",
+            "customLabels": "acq-GRE",
+            "criteria": {
+                "SeriesNumber": 7,
+                "SidecarFilename": "*e2_ph*"
+            },
+            "intendedFor": [
+                5
+            ]
+        },
+        {
+            "dataType": "fmap",
+            "modalityLabel": "epi",
+            "customLabels": "dir-AP",
+            "criteria": {
+                "SeriesNumber": 8
+            },
+            "intendedFor": [
+                5
+            ]
+        },
+        {
+            "dataType": "func",
+            "modalityLabel": "bold",
+            "customLabels": "task-pRF_run-1",
+            "sidecarChanges": {
+                "TaskName": "task-pRF_run-1"
+            },
+            "criteria": {
+                "SeriesNumber": 9
+            }
+        }
+    ]
+}

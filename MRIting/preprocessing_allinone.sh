@@ -1,54 +1,27 @@
-################# 3T dcm2bids #######################
-mri=3T
+# check sub & ima folder
+sub=0501
+ses1_input=/mnt/c/Users/Kwon/Downloads/20230314_MRITING_KSM_KSM
+ses2_input=/mnt/c/Users/Kwon/Downloads/20230315_MRITING_KSM_KSM/
+
+
+# other param
 project=MRIting
-input=압축_푼_ima폴더
-sub=0302
-ses=2
-script_path=/Free-Speech/Speech/Preprocessing
-python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub} --ses ${ses}
+script_path=Free-Speech/Speech/Preprocessing
+bids_path=Free-Speech/MRIting/_DATA_fMRI
+
+
+#### dcm2bids
+# session 1
+python ${script_path}/dcm2bids_all.py ${project} ${ses1_input} ${sub} --ses 1
+
+# session 2
+python ${script_path}/dcm2bids_all.py ${project} ${ses2_input} ${sub} --ses 2
 
 
 
-
-################# 7T dcm2bids #######################
-# /usr/local/MATLAB/R2021b/bin/activate_matlab.sh
-mri=7T
-project=MRIting
-input=압축_푼_ima폴더
-sub=0302
-ses=1
-script_path=/Free-Speech/Speech/Preprocessing
-python ${script_path}/dcm2bids_all.py ${project} ${input} ${sub} --ses ${ses}
-if [ $mri = 7T ]
-then
-    python /Free-Speech/MRIting/7T.py ${project} ${input} ${sub} --ses ${ses}
-fi
-
-
-################# fMRIprep #######################
-subs="0302"
-bids_path=/Free-Speech/MRIting/_DATA_fMRI
-
+#### fmriprep
+subs="0501 0502"
 for sub in $subs
 do
-fmriprep-docker ${bids_path} ${bids_path}/derivatives participant --participant-label ${sub}  --fs-license-file ~/freesurfer/license.txt --skip_bids_validation --ignore slicetiming
+fmriprep-docker ${bids_path} ${bids_path}/derivatives participant --participant-label ${sub} --fs-license-file ~/freesurfer/license.txt 
 done
-
-
-
-################# after prep ######################
-subs="0302"
-project=MRIting
-script_path=/Free-Speech/Speech/Preprocessing
-ses=1
-for sub in $subs
-do
-python ${script_path}/afterprep_all.py ${project} ${sub} --ses ${ses}
-done
-
-ses=2
-for sub in $subs
-do
-python ${script_path}/afterprep_all.py ${project} ${sub} --ses ${ses}
-done
-

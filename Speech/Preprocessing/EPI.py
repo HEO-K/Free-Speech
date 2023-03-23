@@ -6,6 +6,8 @@ import json
 import pandas as pd
 import subprocess as sp
 from Speech.load_project_info import get_full_info
+import zipfile
+import re
 
 ###################### 스크립트서 자주 쓰일 함수 ########################
 # 리눅스인지 확인 
@@ -18,6 +20,7 @@ def isWSL():
 ########################## dcm2bids용 #################################
 # raw 파일 확인하기
 def check_dcm(Project, input_path, ses = None):
+
     """ bids로 변경할 Raw 파일을 확인, 빠진 run이 있는지와 run 변경 방식 출력
 
     Args:
@@ -27,6 +30,9 @@ def check_dcm(Project, input_path, ses = None):
         
     Returns:
         dict: run이름(NAME1): [폴더 정보]
+        dict: run이름(NAME1): [run 정보]
+        str: IMA 파일 위치
+        
     """
 
     # 정보 불러오기.
@@ -42,51 +48,121 @@ def check_dcm(Project, input_path, ses = None):
     
     # baseline이 되는 run정보 만들기
     target_runs = []
+    target_runs_data = dict()
     for run in ses_info:
         runname = run["name"]
-        try:
-            runs = run["runs"]
-            for i in range(runs):
-                target_runs.append(runname+str(i+1))
-        except:
-            target_runs.append(runname)
-    
+        # func
+        if run["type"] == "func":
+            try:
+                runs = run["runs"]
+                for i in range(runs):
+                    target_runs.append(runname+str(i+1))
+                    target_runs_data[runname+str(i+1)] = run
+            except:
+                target_runs.append(runname)
+                target_runs_data[runname] = run
+        # anat
+        elif run["type"] == "anat":
+            if run["modality"] == "T1w": 
+                target_runs.append(runname+"_MPRAGE")
+                target_runs_data[runname+"_MPRAGE"] = run
+            elif run["modality"] == "MP2RAGE": 
+                target_runs.append("MP2RAGE_"+runname)
+                target_runs_data["MP2RAGE_"+runname] = run
+            elif run["modality"] == "UNIT1": 
+                target_runs.append("MP2RAGE_UNI")
+                target_runs_data["MP2RAGE_UNI"] = run
+        # fmap
+        elif run["type"] == "fmap":
+            if runname == "acq-GRE": 
+                target_runs.append("GRE_"+run["modality"])
+                target_runs_data["GRE_"+run["modality"]] = run
+            elif runname == "dir-AP": 
+                target_runs.append("REF_AP")
+                target_runs_data["REF_AP"] = run
+        
         
     # Input의 중복 run제거하기
-    target_path = os.path.join(input_path, '*')
-    while len(glob.glob(target_path)) == 1: target_path = os.path.join(target_path, "*")
-    # Run data
-    rundata = glob.glob(target_path)
-    runs = []
+    target_path = os.path.abspath(os.path.join(input_path, "."))
+    raw_path = os.path.dirname(target_path)
+    try:      # 압축 풀기 시도 (zip파일이 존재하면 시도한다.)
+        with zipfile.ZipFile(target_path+".zip", "r") as zip_ref:
+            print("\n-----------------------------------------------------")
+            print("Unzip data")
+            zip_ref.extractall(raw_path)
+        os.remove(target_path+".zip")
+    except:   # 되어 있다면 그냥 넘어감
+        pass
+    # 한 스캔 정보로 여러번 스캔하면 폴더가 여러개 생성됨
+    target_list = glob.glob(os.path.join(target_path,"*"))   
+    if len(target_list)>1: # 그래서 가장 최근 것만 사용
+        scan_date = []
+        for foldername in target_list:
+            foldername = os.path.basename(foldername)
+            dates = foldername.split("_")[-3:]
+            scan_date.append(int(dates[0])*(10**12)+
+                             int(dates[1])*(10**6)+
+                             int(dates[2]))
+        target_path = target_list[np.argmax(scan_date)]
+    elif len(target_list) == 1:
+        target_path = target_list[0]
+    else:
+        raise FileNotFoundError("File "+target_path+" do not exist")   
+    
+
+    # Input IMA의 폴더 정보 불러오기
+    rundata = glob.glob(os.path.join(target_path,"*"))
+    run_folders = []
     for run in rundata:
-        runs.append(list(os.path.split(run))[-1])
-    # Run order
+        run_folders.append(os.path.basename(run))
+    # 순서대로 정렬
     order = []
-    for run in runs:
+    for run in run_folders:
         order.append(run.split("_")[-1])
     order = np.argsort(order)
-    # sorted runs
-    runs = np.array(runs)[order]
-    
-    
+    run_folders = np.array(run_folders)[order]
+    run_folders = [folder_name for forder_name in run_folders if not "_SPLIT_" in folder_name]        
+            
     # check results
     check_results = dict()
     for runname in target_runs:
-        try:
-            name = runname.split('_')[0]
-            runs = runname.split('_')[1]
-            runname_upper = name.upper()+"_"+runs
-        except:
-            runname_upper = runname.upper()
-        check_results[runname] = []
-        for run in runs:
-            # if runname_upper == run.split("_")[0]:  # name_index의 형태이므로, 만약 아예 겹치는 이름이 없다면 아래가 나음
-            if runname_upper in run:
-                check_results[runname].append(run)
+        runname_upper = runname.upper()
+        # GRE
+        if "GRE" in runname_upper:      
+            if "magnitude" in runname:  # magnitude로만 완성
+                check_results[runname] = []
+                check_results[runname.replace("magnitude", 'phase')] = []
+                run_exp = re.compile("GRE-FIELD-MAPPING")  # gre_run이름
+                checked_run = []
+                for folder_name in run_folders:
+                    if len(run_exp.findall(folder_name))>0:
+                        if folder_name.split("_")[-1] not in checked_run:
+                            check_results[runname].append(folder_name)
+                            check_results[runname.replace("magnitude", 'phase')].\
+                                append(folder_name[:-4]+\
+                                    str(int(folder_name.split("_")[-1])+1).zfill(4))
+                        checked_run.append(folder_name.split("_")[-1])
+                        checked_run.append(str(int(folder_name.split("_")[-1])+1).zfill(4))
+        # MP2RAGE
+        elif "MP2RAGE" in runname_upper:
+            check_results[runname] = []
+            ref = runname_upper.split("_")[-1]
+            if "-" in ref: ref = ref.replace("-","")
+            for folder_name in run_folders:
+                if ref in folder_name:
+                    check_results[runname].append(folder_name)
+
+        else:
+            check_results[runname] = []
+            for folder_name in run_folders:
+                if runname_upper in folder_name:
+                    check_results[runname].append(folder_name)
+    # 모든 동일한 run 중 가장 마지막 run만 사용            
     for run in check_results.keys():
         if len(check_results[run]) > 1:
-            check_results[run] = [check_results[run][-1]]
+            check_results[run] = [check_results[run][-1]] 
 
+    
     
     # print results
     missed_run = []
@@ -99,24 +175,25 @@ def check_dcm(Project, input_path, ses = None):
         ans = input(msg)
         if ans == "n": return
     
-    print("\n-----------------------------------------------------")
+    print("\n-------------------------------------------------------")
     print("        TASK&RUN        -->        Raw_folder")
-    print("-----------------------------------------------------")
+    print("-------------------------------------------------------")
     for run in check_results.keys():
         try:
             print("%22s  -->  %s" % (run, check_results[run][0]))
         except:
             print("%22s  -->  %s" % (run, check_results[run]))
     print("\n\n")
-    return(check_results)
+    return(check_results, target_runs_data, target_path)
     
     
 # dcm2bids config file 저장
-def save_config(check_results, Project, sub, ses=None):
+def save_config(check_results, target_runs_data, Project, sub, ses=None):
     """ bids folder의 tmp_dcm2bids 안에 임시 config file 생성.
 
     Args:
         check_results (dict): check_dcm의 결과.
+        target_runs_data (dict): check_dcm의 결과.
         Project (str): 프로젝트 이름.
         sub (str): bids의 sub 번호.
         ses (str, optional): session. Defaults to None.
@@ -133,49 +210,98 @@ def save_config(check_results, Project, sub, ses=None):
     json_data = dict()
     json_data["descriptions"] = []
     
+    # fmap이 가리키는 run들
+    intendrange = []
+    run_number = 0
+    for bids_run in check_results.keys():
+        if check_results[bids_run] != []:
+            if target_runs_data[bids_run]["type"] == "func":
+                intendrange.append(run_number)
+            if "GRE" in target_runs_data[bids_run]["name"]:
+                run_number += 2
+            else: run_number += 1
+    
     for bids_run in check_results.keys():
         if check_results[bids_run] == []:
             pass
         else:
-            if bids_run == "T1":
-                run_dict = {
-                    "dataType": "anat",
-                    "modalityLabel": "T1w",
+            target_run = target_runs_data[bids_run]
+            run_type = target_run["type"]
+            if run_type == "anat":
+                if target_run["modality"] == "T1w":
+                    run_dict = {
+                    "dataType": run_type,
+                    "modalityLabel": target_run["modality"],
                     "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:])}
-                    }
-            elif bids_run == "UNI":
-                run_dict = {
-                    "dataType": "anat",
-                    "modalityLabel": "UNI",
+                    }   
+                else:  
+                    run_dict = {
+                    "dataType": run_type,
+                    "modalityLabel": target_run["modality"],
+                    "customLabels": target_run["name"],
                     "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:])}
-                    }
-            elif bids_run == "INV1":
-                run_dict = {
-                    "dataType": "anat",
-                    "modalityLabel": "INV1",
-                    "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:])}
-                    }
-            elif bids_run == "INV2":
-                run_dict = {
-                    "dataType": "anat",
-                    "modalityLabel": "INV2",
-                    "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:])}
-                    }
-            else:
-                if bids_run[-1].isdigit():
-                    customLabels = "task-"+bids_run[:-1]+"_run-"+bids_run[-1]
-                    TaskName = bids_run[:-1]
+                    }          
+            elif run_type == "func":
+                run_number = re.sub(r'[^0-9]', '', bids_run)
+                if len(run_number)>0:
+                    func_label = "task-"+target_run['name']+"_run-"+run_number
                 else:
-                    customLabels = "task-"+bids_run
-                    TaskName = bids_run
+                    func_label ="task-"+target_run['name']
                 run_dict = {
-                    "dataType": "func",
-                    "modalityLabel": "bold",
-                    "customLabels": customLabels,
+                   "dataType": run_type,
+                   "modalityLabel": target_run["modality"],
+                   "customLabels": func_label,
+                   "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:])},
+                   "sidecarChanges": {"TaskName": target_run['name']}
+                   }
+            elif run_type == "fmap":
+                if "GRE" in target_run["name"]:
+                    if target_run["modality"] == "magnitude":
+                        run_dict = {
+                        "dataType": run_type,
+                        "modalityLabel": target_run["modality"]+"1",
+                        "customLabels": target_run["name"],
+                        "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                    "SidecarFilename": "*e1*"},
+                        "intendedFor": intendrange
+                        }  
+                        json_data["descriptions"].append(run_dict)
+                        run_dict = {
+                        "dataType": run_type,
+                        "modalityLabel": target_run["modality"]+"2",
+                        "customLabels": target_run["name"],
+                        "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                    "SidecarFilename": "*e2*"},
+                        "intendedFor": intendrange
+                        }    
+                    elif target_run["modality"] == "phase": 
+                        run_dict = {
+                        "dataType": run_type,
+                        "modalityLabel": target_run["modality"]+"1",
+                        "customLabels": target_run["name"],
+                        "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                    "SidecarFilename": "*e1_ph*"},
+                        "intendedFor": intendrange
+                        }  
+                        json_data["descriptions"].append(run_dict)
+                        run_dict = {
+                        "dataType": run_type,
+                        "modalityLabel": target_run["modality"]+"2",
+                        "customLabels": target_run["name"],
+                        "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                    "SidecarFilename": "*e2_ph*"},
+                        "intendedFor": intendrange
+                        }                                       
+                else:
+                    run_dict = {
+                    "dataType": run_type,
+                    "modalityLabel": target_run["modality"],
+                    "customLabels": target_run["name"],
                     "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:])},
-                    "sidecarChanges": {"TaskName": TaskName}
-                    }
+                    "intendedFor": intendrange
+                    }                
             json_data["descriptions"].append(run_dict)
+            
 
     bids_path = info['bids_path']
     os.makedirs(os.path.join(bids_path, "tmp_dcm2bids"), exist_ok=True)
@@ -522,6 +648,7 @@ def sc_dt_hp_sm(Project, sub, runname, ses=None):
     
     
 ##################################### 7T #####################################
+# prep SDC로 대체됨.
 def SDC(Project, ima_path, sub, ses=None, gre_name="*GRE*", replace=True, sudo=False):
     """ SDC 
 
