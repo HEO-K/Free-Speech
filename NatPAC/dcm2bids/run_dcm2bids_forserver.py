@@ -1,4 +1,4 @@
-# %% 함수들
+
 import os
 import json
 import zipfile
@@ -6,17 +6,9 @@ import glob
 import numpy as np
 import subprocess as sp
 
-## NatPAC session 정보를 불러오기 
-def load_info(ses, filepath="/sas2/PECON/7T/NatPAC/code/dcm2bids/project_info.json"):
-    """ NatPAC의 session 정보를 불러온다. R, A는 제거하고 자동으로 불러옴.
-    
-    Args:
-        ses (str): 세션 번호. ('07')
-        filepath (optional, str): NatPAC session정보가 저장되어 있는 파일 위치.
-        
-    Returns:
-        dict: json형태의 정보
-    """
+
+def load_info(ses, filepath='/sas2/PECON/7T/NatPAC/code/dcm2bids/project_info.json'):
+
     ses = str(ses)
 
     while ses[-1] == "R" or ses[-1] == "A":
@@ -28,36 +20,24 @@ def load_info(ses, filepath="/sas2/PECON/7T/NatPAC/code/dcm2bids/project_info.js
     return ses_info
 
 
-## Raw 파일 확인하기
-def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
-    """ bids로 변경할 Raw 파일을 확인, 빠진 run이 있는지와 run 변경 방식 출력
 
-    Args:
-        sub (str): 피험자 번호.
-        ses (str): 세션 번호.
-        raw_path (optional, str): IMA데이터를 저장하는 파일 위치
-        
-    Returns:
-        [dict: run이름: [폴더 정보],
-         dict: run이름: [config 정보]
-         str:  IMA폴더 경로
-        ]
-    """
+def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
+
     
     # IMA path
-    target_folder = f"NATPAC_SUB-{sub}_SES-{ses}"
+    target_folder = f'NATPAC_SUB-{sub}_SES-{ses}'
     target_path = os.path.join(raw_path, target_folder)
-    try:      # 압축 풀기 시도 (zip파일이 존재하면 시도한다.)
+    try:      
         os.mkdir(target_path)
         print("\n---------------------------------------------------------------------------")
         print("Unzip data")
         sp.call(" ".join(["unzip", target_path+".zip", "-d", target_path]),shell=True)
         os.remove(target_path+".zip")
-    except:   # 되어 있다면 그냥 넘어감
+    except:  
         pass
-    # 한 스캔 정보로 여러번 스캔하면 폴더가 여러개 생성됨
+
     target_list = glob.glob(os.path.join(target_path,"*"))   
-    if len(target_list)>1: # 그래서 가장 최근 것만 사용
+    if len(target_list)>1: 
         scan_date = []
         for foldername in target_list:
             foldername = os.path.basename(foldername)
@@ -71,9 +51,9 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     else:
         raise FileNotFoundError("File "+target_path+" do not exist")
     
-    # 정보 불러오기.
+
     ses_info = load_info(ses)
-    # baseline이 되는 run정보 만들기 (폴더 이름)
+
     target_runs = []
     target_runs_data = dict()
     for run in ses_info:
@@ -141,12 +121,12 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
                         "modalityLabel": run["modality"]
                     }                    
 
-    # Input IMA의 폴더 정보 불러오기
+ 
     rundata = glob.glob(os.path.join(target_path,"*"))
     run_folders = []
     for run in rundata:
         run_folders.append(os.path.basename(run))
-    # 순서대로 정렬
+  
     order = []
     for run in run_folders:
         order.append(run.split("_")[-1])
@@ -158,7 +138,6 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
             run_folders.append(name)
     run_folders = np.array(run_folders)
     
-    
     # check results
     check_results = dict()
     for runname in target_runs:
@@ -166,7 +145,7 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
         # GRE
         if "FMAP_ACQ-GRE" in runname_upper:   
                
-            if "magnitude" in runname:  # magnitude로만 완성
+            if "magnitude" in runname:  
                 check_results[runname] = []
                 check_results[runname.replace("magnitude", 'phase')] = []
 
@@ -195,13 +174,12 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
                 if runname_upper in folder_name:
                     check_results[runname].append(folder_name)
                     
-    # 모든 동일한 run 중 가장 마지막 run만 사용            
+           
     for run in check_results.keys():
         if len(check_results[run]) > 1:
             check_results[run] = [check_results[run][-1]] 
 
-    
-    # 결과 출력하기
+ 
     missed_run = []
     for run in target_runs:
         if check_results[run] == []: missed_run.append(run)
@@ -227,29 +205,20 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     
 
 
-## dcm2bids config file 저장
-def save_config(check_results, target_runs_data, sub, ses):
-    """ bids folder의 tmp_dcm2bids 안에 임시 config file 생성.
 
-    Args:
-        check_results (dict): check_dcm의 결과.
-        target_runs_data (list of dict): check_dcm의 결과.
-        sub (str): 피험자 번호.
-        ses (str): 세션 번호.
-    """
-    
-    # 저장되는 파일 이름
+def save_config(check_results, target_runs_data, sub, ses):
+
     filename = "sub-"+sub+"_ses-"+ses+"_config.json"
     
-    # 프로젝트 정보 불러오기.
+
     bids_path = load_info("bids_path")
         
-    # json 데이터 생성
+
     json_data = dict()
     json_data["descriptions"] = []
     
         
-    # fmap이 가리키는 run들
+
     intendrange = []
     run_number = 0
     for bids_run in check_results.keys():
@@ -260,7 +229,7 @@ def save_config(check_results, target_runs_data, sub, ses):
                 run_number += 2
             else: run_number += 1
     
-    # config 생성하기
+
     for bids_run in check_results.keys():
         if check_results[bids_run] == []:
             pass
@@ -321,7 +290,7 @@ def save_config(check_results, target_runs_data, sub, ses):
 
     os.makedirs(os.path.join(bids_path, "tmp_dcm2bids"), exist_ok=True)
 
-    # 파일 저장
+
     json_path = os.path.join(bids_path, "tmp_dcm2bids", filename)
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=4)  
@@ -330,19 +299,10 @@ def save_config(check_results, target_runs_data, sub, ses):
     print("---------------------------------------------------------------------------")
     return 
 
-## dcm2bids 돌리기
-def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=True):
-    """ tmp폴더의 json 정보를 통해 dcm2bids 실행.
 
-    Args:
-        sub (str): 피험자 번호.
-        ses (str): 세션 번호.
-        input_path (str): dcm 파일 위치
-        custom_config (bool, optional): 직접 만든 config 이용. Defaults to False.
-        del_tmp (bool, optional): tmp 파일 삭제. Defaults to True.
-    """
+def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=False):
 
-
+    
     bids_path = load_info("bids_path")
     if custom_config==False:
         filename = "sub-"+sub+"_ses-"+ses+"_config.json"
@@ -358,7 +318,6 @@ def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=True):
     command = " ".join(command)
     sp.call(command, shell=True)
     
-    # tmp폴더 비우기
     if del_tmp:
         sp.call("rm -rf "+os.path.join(os.path.join(bids_path, "tmp_dcm2bids", "*")), shell=True)
     return 
@@ -366,7 +325,6 @@ def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=True):
 
 
 
-# %% dcm2bids 실행
 import argparse
 parser = argparse.ArgumentParser(description='NatPAC dcm2bids')
 parser.add_argument('sub', help='subject number')

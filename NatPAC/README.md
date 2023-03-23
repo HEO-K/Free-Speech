@@ -4,6 +4,15 @@ CNIR 서버에서 NatPAC 데이터 bids서식화
 <br/>
 <br/>
 
+## 0. 파일 설명
+- [`project_info.json`](./dcm2bids/project_info.json): NatPAC session information (for code)
+- [`run_dcm2bids.py`](./dcm2bids/run_dcm2bids.py): 메인 코드
+- [`run_dcm2bids.sh`](./dcm2bids/run_dcm2bids.sh): 위 코드를 bash로 실행하는 코드
+- [`run_dcm2bids_forserver.py`](./dcm2bids/run_dcm2bids_forserver.py): 서버용 코드 (한글 주석 없음)
+<br/> 
+<br/>
+<br/>
+
 ## 1. 서버에 파일 업로드
 CNIR05에서 피험자 폴더 자체를 다운받는다.
 
