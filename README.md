@@ -11,6 +11,7 @@ Speech 실험의 A-to-Z\
 2. [Preprocessing (fMRI, Audio) 해보기](#2-preprocessing-fmri-audio-해보기)
 3. [분석 코드](#3-분석-코드)
 4. [MRIting](#4-mriting)
+5. [NatPAC](#5-natpac-dcm2bids)
 <br/>
 <br/>
 <br/>
@@ -19,6 +20,7 @@ Speech 실험의 A-to-Z\
 - [`Analysis_Code`](Analysis_Code): 분석 코드
 - [`Experiment_Code`](Experiment_Code): 실험 코드
 - [`MRIting`](MRIting): MRIting 전용 전처리
+- [`NatPAC`](NatPAC): NatPAC dcm2bids
 - [`Speech`](Speech): python 모듈
 - [`speech_3T`](speech_3T): preprocessing & speech_3T DATA
 - [`Speech_linux.pth`](Speech_linux.pth): Speech python 모듈 경로 설정 파일 (Linux OS)
@@ -60,3 +62,10 @@ __사용법__
 ## 4. MRIting
 MRIting 전용 fMRI, audio preprocessing\
 [`MRIting`](MRIting)의 `README.md`를 참고하자.
+<br/>
+<br/>
+<br/>
+
+## 5. NatPAC dcm2bids
+NatPAC데이터를 bids format으로 변환\
+[`NatPAC`](NatPAC)의 `README.md`를 참고하자.
