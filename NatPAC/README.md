@@ -42,7 +42,7 @@ scp ${download_path}/NATPAC_SUB-{sub}_SES-{ses}.zip  wonmokshim@115.145.185.185:
 ### 변수, 여기만 수정
 sub=003
 ses=07    # pre-02, 0XR, 0XA도 가능
-download_path=/mnt/c/Users/Kwon/Downloads
+# download_path=/mnt/c/Users/Kwon/Downloads
 
 
 ### 서버에 파일 업로드
