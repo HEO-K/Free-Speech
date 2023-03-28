@@ -17,14 +17,14 @@ def load_info(ses, filepath="/sas2/PECON/7T/NatPAC/code/dcm2bids/project_info.js
     Returns:
         dict: json형태의 정보
     """
-    ses = str(ses)
-
-    while ses[-1] == "R" or ses[-1] == "A":
-        ses = ses[:-1]
     with open(os.path.join(filepath)) as f:
         info = json.load(f)
-    try: ses_info = info["ses-"+ses]
-    except: ses_info = info[ses]
+    ses = str(ses)
+    try: ses_info = info[ses]
+    except:
+        while not ses[-1].isdigit():
+            ses = ses[:-1]
+        ses_info = info["ses-"+ses]
     return ses_info
 
 
@@ -45,16 +45,16 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     """
     
     # IMA path
-    target_folder = f"NATPAC_SUB-{sub}_SES-{ses}"
+    target_folder = f"NATPAC_SUB-{sub}_SES-{ses.upper()}"
     target_path = os.path.join(raw_path, target_folder)
     try:      # 압축 풀기 시도 (zip파일이 존재하면 시도한다.)
-        os.mkdir(target_path)
         print("\n---------------------------------------------------------------------------")
         print("Unzip data")
-        sp.call(" ".join(["unzip", target_path+".zip", "-d", target_path]),shell=True)
+        sp.call(" ".join(["unzip -qq", target_path+".zip", "-d", raw_path]),shell=True)
         os.remove(target_path+".zip")
     except:   # 되어 있다면 그냥 넘어감
-        pass
+        print("\n---------------------------------------------------------------------------")
+        print("Find data")
     # 한 스캔 정보로 여러번 스캔하면 폴더가 여러개 생성됨
     target_list = glob.glob(os.path.join(target_path,"*"))   
     if len(target_list)>1: # 그래서 가장 최근 것만 사용
@@ -192,7 +192,7 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
         # Chimap
         elif "ANAT_CHIMAP" in runname_upper:
             check_results[runname] = []
-            for foler_name in run_folders:
+            for folder_name in run_folders:
                 if "SWI_IMAGES" in folder_name:
                     check_results[runname].append(folder_name)
                     
@@ -276,8 +276,41 @@ def save_config(check_results, target_runs_data, sub, ses):
             run_type = target_run["dataType"]
             criteria = {"SeriesNumber": int(check_results[bids_run][0][-4:])}
             if run_type == "anat":
-                run_dict = target_run
-                run_dict["criteria"] = criteria
+                if "Chimap" in target_run["modalityLabel"]:
+                    run_dict = {
+                    "dataType": run_type,
+                    "modalityLabel": target_run["modalityLabel"],
+                    "customLabels": "echo-1",
+                    "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                "SidecarFilename": "*e1*"}
+                    }
+                    json_data["descriptions"].append(run_dict)
+                    run_dict = {
+                    "dataType": run_type,
+                    "modalityLabel": target_run["modalityLabel"],
+                    "customLabels": "echo-2",
+                    "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                "SidecarFilename": "*e2*"}
+                    }
+                    json_data["descriptions"].append(run_dict)  
+                    run_dict = {
+                    "dataType": run_type,
+                    "modalityLabel": target_run["modalityLabel"],
+                    "customLabels": "echo-3",
+                    "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                "SidecarFilename": "*e3*"}
+                    }
+                    json_data["descriptions"].append(run_dict)  
+                    run_dict = {
+                    "dataType": run_type,
+                    "modalityLabel": target_run["modalityLabel"],
+                    "customLabels": "echo-4",
+                    "criteria": {"SeriesNumber": int(check_results[bids_run][0][-4:]),
+                                "SidecarFilename": "*e4*"}
+                    }                   
+                else:
+                    run_dict = target_run
+                    run_dict["criteria"] = criteria
             elif run_type == "func":
                 run_dict = target_run
                 run_dict["sidecarChanges"] = {"TaskName": target_run['customLabels']}
