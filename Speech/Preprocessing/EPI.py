@@ -516,7 +516,8 @@ def save_motion(Project, sub, ses=None):
         task = file.split("task-")[1].split("_desc")[0]
         print(task)
         motions = pd.read_csv(file, sep="\t")
-        pars = np.array(motions[['trans_x', 'trans_y', 'trans_z', 'rot_x', 'rot_y', 'rot_z']])
+        pars = np.array(motions[['trans_x', 'trans_y', 'trans_z', 
+                                 'rot_x', 'rot_y', 'rot_z']])
         pars = np.nan_to_num(pars)
         fd = np.array(motions['framewise_displacement'])
         fd = np.nan_to_num(fd)
@@ -559,18 +560,18 @@ def save_motion(Project, sub, ses=None):
         plt.plot(pars[:,:3])
         plt.ylabel("Trans (mm)")
         plt.legend(['x','y','z'])
-        plt.ylim([-1,1])
+        plt.ylim([-2,2])
         plt.subplot(len(files), 3, 2+3*i)
         plt.plot(pars[:,3:])
         plt.title(task+" (outlier ratio: "+str(np.round(np.mean(fd>0.5),3))+")")
         plt.ylabel("Rot (radian)")
         plt.legend(['x','y','z'])
-        plt.ylim([-0.04,0.04])
+        plt.ylim([-0.05,0.05])
         plt.subplot(len(files), 3, 3+3*i)
         plt.plot(fd, color='k')
         plt.text(np.argmax(fd), np.max(fd+0.03), str(np.round(np.max(fd),2)), 
             horizontalalignment='center')
-        plt.ylim([0,1])
+        plt.ylim([0,1.5])
         plt.axhline(y=0.5, color='r', linestyle = "--", linewidth=2)
         plt.ylabel("FD")
     # save

@@ -1,4 +1,3 @@
-
 import os
 import json
 import zipfile
@@ -167,7 +166,13 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
                 if "ANAT_MP2RAGE" in folder_name:
                     if mp2rage_type in folder_name:
                         check_results[runname].append(folder_name)
-               
+        # Chimap
+        elif "ANAT_CHIMAP" in runname_upper:
+            check_results[runname] = []
+            for foler_name in run_folders:
+                if "SWI_IMAGES" in folder_name:
+                    check_results[runname].append(folder_name)
+                                   
         else:
             check_results[runname] = []
             for folder_name in run_folders:
