@@ -40,15 +40,15 @@ scp ${download_path}/NATPAC_SUB-{sub}_SES-{ses}.zip  wonmokshim@115.145.185.185:
 서버에 접속해서 [`run_dcm2bids.sh`](./dcm2bids/run_dcm2bids.sh)의 코드를 실행한다.
 ```bash
 ### 변수, 여기만 수정
-sub=003
-ses=07    # pre-02, 0XR, 0XA도 가능
-# download_path=/mnt/c/Users/Kwon/Downloads
+sub=008
+ses=pre02         # XXR, XXa... 도 가능
 
 
 ### 서버에 파일 업로드
 # 로컬 *.zip파일을 /sas2/PECON/7T/NatPAC/sourcedata로
 # 로컬에서 실행
-# scp ${download_path}/NATPAC_SUB-{sub}_SES-{ses}.zip  wonmokshim@115.145.185.185:/sas2/PECON/7T/NatPAC/sourcedata/
+# download_path=/mnt/c/Users/Kwon/Downloads
+# scp ${download_path}/NATPAC_SUB-${sub}_SES-${ses^^}.zip  wonmokshim@115.145.185.185:/sas2/PECON/7T/NatPAC/sourcedata/
 
 
 ### dcm2bids 실행
