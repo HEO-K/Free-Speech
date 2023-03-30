@@ -46,7 +46,7 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
                                 int(dates[1])*(10**6)+
                                 int(dates[2]))
             except:
-                pass
+                scan_date.append(0)
         target_path = target_list[np.argmax(scan_date)]
     elif len(target_list) == 1:
         target_path = target_list[0]
