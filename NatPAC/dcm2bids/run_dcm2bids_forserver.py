@@ -27,29 +27,33 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     target_path = os.path.join(raw_path, target_folder)
     try:      
         print("\n---------------------------------------------------------------------------")
-        print("Unzip data")
+        print("Try unzip data")
         sp.call(" ".join(["unzip -qq", target_path+".zip", "-d", raw_path]),shell=True)
         os.remove(target_path+".zip")
+        print("---------------------------------------------------------------------------")
     except:  
         print("\n---------------------------------------------------------------------------")
-        print("Find data")
+        print("Find sourcedata")
 
     target_list = glob.glob(os.path.join(target_path,"*"))   
-    if len(target_list)>1: 
+    if len(target_list)>1:
         scan_date = []
         for foldername in target_list:
-            foldername = os.path.basename(foldername)
-            dates = foldername.split("_")[-3:]
-            scan_date.append(int(dates[0])*(10**12)+
-                             int(dates[1])*(10**6)+
-                             int(dates[2]))
+            try:
+                foldername = os.path.basename(foldername)
+                dates = foldername.split("_")[-3:]
+                scan_date.append(int(dates[0])*(10**12)+ 
+                                int(dates[1])*(10**6)+
+                                int(dates[2]))
+            except:
+                pass
         target_path = target_list[np.argmax(scan_date)]
     elif len(target_list) == 1:
         target_path = target_list[0]
     else:
         raise FileNotFoundError("File "+target_path+" do not exist")
     
-
+    print("---------------------------------------------------------------------------")
     ses_info = load_info(ses)
 
     target_runs = []
@@ -189,12 +193,14 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     if missed_run: 
         msg = "Run "
         for run in missed_run: msg = msg + '"' + run + '" ' 
-        print("---------------------------------------------------------------------------")
-        msg = msg+"is missed. \n---------------------------------------------------------------------------\nNevertheless, do you want to continue? (y or n)\n"
+        print("\n---------------------------------------------------------------------------")
+        msg = msg+"is missed. \nNevertheless, do you want to continue? (y or n)\n"
         ans = input(msg)
         if ans == "n": 
             raise FileNotFoundError("Check '"+target_path+"' run_folder name")
-    
+        print("---------------------------------------------------------------------------")
+        
+        
     print("\n---------------------------------------------------------------------------")
     print("              TASK&RUN              -->              Raw_folder")
     print("---------------------------------------------------------------------------")
@@ -203,7 +209,6 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
             print("%34s  -->  %s" % (run, check_results[run][0]))
         except:
             print("%34s  -->  %s" % (run, check_results[run]))
-    print("\n\n")
     return([check_results, target_runs_data, target_path])
     
 
@@ -351,6 +356,12 @@ def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=False):
         "-o", bids_path]
         #"--forceDcm2niix --clobber"]
         
+    command = " ".join(command)
+    sp.call(command, shell=True)
+    
+    command = ["mv",
+               os.path.join(bids_path, "tmp_dcm2bids", filename),
+               os.path.join(bids_path, "sub-"+sub)]
     command = " ".join(command)
     sp.call(command, shell=True)
     

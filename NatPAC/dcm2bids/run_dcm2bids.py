@@ -49,28 +49,33 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     target_path = os.path.join(raw_path, target_folder)
     try:      # 압축 풀기 시도 (zip파일이 존재하면 시도한다.)
         print("\n---------------------------------------------------------------------------")
-        print("Unzip data")
+        print("Try unzip data")
         sp.call(" ".join(["unzip -qq", target_path+".zip", "-d", raw_path]),shell=True)
         os.remove(target_path+".zip")
+        print("---------------------------------------------------------------------------")
     except:   # 되어 있다면 그냥 넘어감
         print("\n---------------------------------------------------------------------------")
-        print("Find data")
+        print("Find source data")
     # 한 스캔 정보로 여러번 스캔하면 폴더가 여러개 생성됨
     target_list = glob.glob(os.path.join(target_path,"*"))   
-    if len(target_list)>1: # 그래서 가장 최근 것만 사용
+    if len(target_list)>1:
         scan_date = []
         for foldername in target_list:
-            foldername = os.path.basename(foldername)
-            dates = foldername.split("_")[-3:]
-            scan_date.append(int(dates[0])*(10**12)+
-                             int(dates[1])*(10**6)+
-                             int(dates[2]))
+            try:
+                foldername = os.path.basename(foldername)
+                dates = foldername.split("_")[-3:]
+                # 그래서 스캔 날짜를 체크하고 가장 최신 것만.
+                scan_date.append(int(dates[0])*(10**12)+ 
+                                int(dates[1])*(10**6)+
+                                int(dates[2]))
+            except:
+                pass
         target_path = target_list[np.argmax(scan_date)]
     elif len(target_list) == 1:
         target_path = target_list[0]
     else:
         raise FileNotFoundError("File "+target_path+" do not exist")
-    
+    print("---------------------------------------------------------------------------")
     # 정보 불러오기.
     ses_info = load_info(ses)
     # baseline이 되는 run정보 만들기 (폴더 이름)
@@ -215,12 +220,14 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     if missed_run: 
         msg = "Run "
         for run in missed_run: msg = msg + '"' + run + '" ' 
-        print("---------------------------------------------------------------------------")
-        msg = msg+"is missed. \n---------------------------------------------------------------------------\nNevertheless, do you want to continue? (y or n)\n"
+        print("\n---------------------------------------------------------------------------")
+        msg = msg+"is missed. \nNevertheless, do you want to continue? (y or n)\n"
         ans = input(msg)
         if ans == "n": 
             raise FileNotFoundError("Check '"+target_path+"' run_folder name")
-    
+        print("---------------------------------------------------------------------------")
+        
+        
     print("\n---------------------------------------------------------------------------")
     print("              TASK&RUN              -->              Raw_folder")
     print("---------------------------------------------------------------------------")
@@ -229,7 +236,6 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
             print("%34s  -->  %s" % (run, check_results[run][0]))
         except:
             print("%34s  -->  %s" % (run, check_results[run]))
-    print("\n\n")
     return([check_results, target_runs_data, target_path])
     
 
@@ -397,7 +403,14 @@ def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=True):
         
     command = " ".join(command)
     sp.call(command, shell=True)
-    
+
+    # config sub폴더로
+    command = ["mv",
+               os.path.join(bids_path, "tmp_dcm2bids", filename),
+               os.path.join(bids_path, "sub-"+sub)]
+    command = " ".join(command)
+    sp.call(command, shell=True)
+
     # tmp폴더 비우기
     if del_tmp:
         sp.call("rm -rf "+os.path.join(os.path.join(bids_path, "tmp_dcm2bids", "*")), shell=True)

@@ -461,6 +461,24 @@
             "name": "dir-AP",
 		"type": "fmap",
 		"modality": "epi" 
+        },
+        {
+            "name": "pain_REST",
+            "runs": 1,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "pain_HEAT",
+            "runs": 4,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "pain_CAPS",
+            "runs": 1,
+		"type": "func",
+		"modality": "bold" 
         }
     ],
     "ses-13": [
@@ -480,7 +498,7 @@
 		"modality": "epi" 
         },
         {
-            "name": "MCHERDING",
+            "name": "mcHERDING",
             "runs": 6,
 		"type": "func",
 		"modality": "bold" 

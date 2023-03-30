@@ -11,5 +11,4 @@ ses=pre02         # XXR, XXa... 도 가능
 
 
 ### dcm2bids 실행
-script_path=/sas2/PECON/7T/NatPAC/code/dcm2bids
-python3 ${script_path}/run_dcm2bids.py ${sub} ${ses}
+python3 /sas2/PECON/7T/NatPAC/code/dcm2bids/run_dcm2bids.py ${sub} ${ses}
