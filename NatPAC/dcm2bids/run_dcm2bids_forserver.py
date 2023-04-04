@@ -51,7 +51,7 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     elif len(target_list) == 1:
         target_path = target_list[0]
     else:
-        raise FileNotFoundError("File "+target_path+" do not exist")
+        target_path = raw_path
     
     print("---------------------------------------------------------------------------")
     ses_info = load_info(ses)

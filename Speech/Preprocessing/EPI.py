@@ -121,7 +121,7 @@ def check_dcm(Project, input_path, ses = None):
         order.append(run.split("_")[-1])
     order = np.argsort(order)
     run_folders = np.array(run_folders)[order]
-    run_folders = [folder_name for forder_name in run_folders if not "_SPLIT_" in folder_name]        
+    run_folders = [folder_name for folder_name in run_folders if not "_SPLIT_" in folder_name]        
             
     # check results
     check_results = dict()

@@ -1,13 +1,15 @@
 # %% 함수들
 import os
 import json
-import zipfile
 import glob
 import numpy as np
 import subprocess as sp
 
+
+this_path = os.path.dirname(os.path.realpath(__file__))
+
 ## NatPAC session 정보를 불러오기 
-def load_info(ses, filepath="/sas2/PECON/7T/NatPAC/code/dcm2bids/project_info.json"):
+def load_info(ses, filepath=os.path.join(this_path, "project_info.json")):
     """ NatPAC의 session 정보를 불러온다. R, A는 제거하고 자동으로 불러옴.
     
     Args:
@@ -29,7 +31,7 @@ def load_info(ses, filepath="/sas2/PECON/7T/NatPAC/code/dcm2bids/project_info.js
 
 
 ## Raw 파일 확인하기
-def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
+def check_dcm(sub, ses, raw_path="~/Downloads"):
     """ bids로 변경할 Raw 파일을 확인, 빠진 run이 있는지와 run 변경 방식 출력
 
     Args:
@@ -74,7 +76,7 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     elif len(target_list) == 1:
         target_path = target_list[0]
     else:
-        raise FileNotFoundError("File "+target_path+" do not exist")
+        target_path = raw_path
     print("---------------------------------------------------------------------------")
     # 정보 불러오기.
     ses_info = load_info(ses)
