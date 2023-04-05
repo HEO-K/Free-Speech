@@ -21,7 +21,7 @@ Free Speech는 다음과 같은 순서로 진행된다.
     - 사형 제도를 찬성하는가? 그 이유는?
     - 친구(들)을 최대한 자세히 묘사하기 (외형, 성격, 인간관계 등등).
     - 기억나는 화가 났던 일에 대해 최대한 자세히 회상하기.
-- Zig-zag: 두 주제를 왔다 갔다 하면서 이야기.
+- Zig-zag: 두 주제를 왔다 갔다 하면서 이야기.\
   <img src="https://raw.githubusercontent.com/HEO-K/Free-Speech/master/Experiment_Code/speech_3T/Instruction/STROLL.jpg" width="640" height="360"/>
 <br/>
 
