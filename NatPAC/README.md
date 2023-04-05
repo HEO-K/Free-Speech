@@ -4,7 +4,8 @@ CNIR 서버에서 NatPAC 데이터 bids서식화
 <br/>
 <br/>
 
-## 0. 파일 설명 (`./dcm2bids`)
+## 0. 파일 설명 (in `./dcm2bids`)
+- [`proc00_dcm2bids.sh`](./proc00_dcm2bids.sh): (임시) NatPAC preprocessing code의 proc00_dcm2bids.sh를 대체하는 코드
 - [`project_info.json`](./dcm2bids/project_info.json): NatPAC session information (for code)
 - [`run_dcm2bids.py`](./dcm2bids/run_dcm2bids.py): 메인 코드
 - [`run_dcm2bids.sh`](./dcm2bids/run_dcm2bids.sh): 위 코드를 bash로 실행하는 코드
