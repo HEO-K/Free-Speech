@@ -24,12 +24,12 @@ def timeseries_with_error(data, label=False, color="C0", fill=False, linewidth=1
     return
 
 
-def mni_surface_plot(data, voxel="3", **kwargs):
+def mni_surface_plot(data, voxel="3.0", **kwargs):
     """ MNI surface plot, WSL의 경우 cortex.webshow, 윈도우의 경우 nilearn.view_img_on_surf의 브라우저
     
     Args:
         data (array): (x,y,z) 또는 (n,x,y,z) 데이터
-        voxel (str, optional): 복셀 크기(mm), Defaults to '3'
+        voxel (str, optional): 복셀 크기(mm), Defaults to '3.0'
         kwargs: cortex.Volume or nilearn.view_img_on_surf args
     """
     from Speech.tools import isWSL
@@ -67,7 +67,7 @@ def plot_3d_render(mask, data, view_angle=[30,45], **kwargs):
         mask (bool array): (x,y,z) 의 bool array
         data (array): 플롯할 array, (x,y,z) or 1d
         view_angle (list, optional): 보여지는 각도 [z방향, xy방향], Defaults to [30,45]
-        **kwargs: plt.scatter 변수들
+        **kwargs: for plt.scatter 
         
     Returns:
         ax data

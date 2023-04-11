@@ -127,16 +127,16 @@ def get_atlas(name:str, size='3.0', mni_coordinates=False):
 
     Args:
         name: atlas 이름
-            - "Brainnetome"
-            - "Schaefer2018_<N>Parcels_<7/17>Networks"
-            - "Yeo2011_<7/17>Networks"
+            \- "Brainnetome"
+            \- "Schaefer2018_<N>Parcels_<7/17>Networks"
+            \- "Yeo2011_<7/17>Networks"
         size (int, optional): 복셀 크기(mm). Defaults to 3mm.
         coordinates (bool, optional): parcel의 MNI 좌표. Defaults to False.
 
     Returns: 
         [info, data]
-            - info: string array of [index,name,(x,y,z)]     
-            - data: nii data array
+            \- info: string array of [index,name,(x,y,z)]     
+            \- data: nii data array
     """
     # get information
     base_path = os.path.dirname(__file__)
@@ -180,11 +180,11 @@ def get_MNI(voxel_size, option=None):
     Args:
         voxel_size (str): 복셀 크기.
         option (str, optional): 옵션. Defaults to None.
-            - "mask": brain mask
-            - "wm": white matter
-            - "gm": grey matter
-            - "csf": cerebrospinal fluid
-            - "seg": results of fsl FAST
+            \- "mask": brain mask
+            \- "wm": white matter
+            \- "gm": grey matter
+            \- "csf": cerebrospinal fluid
+            \- "seg": results of fsl FAST
 
     Returns: 
         MNI array
@@ -205,9 +205,9 @@ def parcel_averaging(parcel, epi, size='3.0'):
 
     Args:
         parcel: atlas, 아래 세 종류의 input 가능
-            - atlas에 있는 이름 (ex, Schaefer2018_<N>Parcels_<7/17>Networks)
-            - result of get_atlas [info, data], info를 기준으로 평균.
-            - atlas array, 존재하는 모든 수의 평균값을 구한다.
+            \- atlas에 있는 이름 (ex, Schaefer2018_<N>Parcels_<7/17>Networks)
+            \- result of get_atlas [info, data], info를 기준으로 평균.
+            \- atlas array, 존재하는 모든 수의 평균값을 구한다.
         epi(array): (x,y,z,t) or (v,t) array
         size (number, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm). Defaults to 3mm.
 
@@ -242,17 +242,17 @@ def network_cluster(parcel, epi, size='3', averaging=False):
 
     Args:
         parcel: network name / [info, data]
-            - "Yeo2011_<7/17>Networks"
-            - "Schaefer2018_<N>Parcels_<7/17>Networks"
-            - [info, data]: results of get_atlas
+            \- "Yeo2011_<7/17>Networks"
+            \- "Schaefer2018_<N>Parcels_<7/17>Networks"
+            \- [info, data]: results of get_atlas
         epi(array): (x,y,z,t) or (v,t) array
         size (number, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm). Defaults to 3mm.
         averaging (bool): 네트워크 평균 여부. Defaults to 1.
         
 
     Returns: 네트워크 딕셔너리
-        - dict("Network_Name") = (voxel,t)
-        - 평균 시, dict("Network_Name") = (1,t)
+        \- dict("Network_Name") = (voxel,t)
+        \- 평균 시, dict("Network_Name") = (1,t)
     """
     # load 
     if type(parcel) == str:
@@ -289,9 +289,9 @@ def get_network_info(parcel):
     
     Args:
         parcel (str) : network name / info
-            - "Yeo2011_<7/17>Networks"
-            - "Schaefer2018_<N>Parcels_<7/17>Networks"
-            - info: results of get_atlas, only info
+            \- "Yeo2011_<7/17>Networks"
+            \- "Schaefer2018_<N>Parcels_<7/17>Networks"
+            \- info: results of get_atlas, only info
 
     Returns:
         array (number, name) : 인덱스 & 속하는 네트워크
@@ -314,18 +314,18 @@ def get_network_info(parcel):
     return(results)
 
 
-def data_to_MNI_nifti(input, voxel_size='3'):
+def data_to_MNI_nifti(input, voxel_size='3.0'):
     """ MNI Nifti1Image 이미지화
     
         Args:
             input (array) : input data, mni와 같은 크기여야 함
-            voxel_size (str, optional): 복셀 크기(mm). Defaults to '3'
+            voxel_size (str, optional): 복셀 크기(mm). Defaults to '3.0'
             
         Returns: 
             Nifiti1Image
     """
     
-    mni_filename = "MNI_"+str(voxel_size)+"mm_mask"
+    mni_filename = "MNI_"+voxel_size+"mm_mask"
     base = os.path.dirname(__file__)
     mni_path = glob.glob(os.path.join(base, "_data_Atlas", "MNI", mni_filename+"*"))[0]
     mni = nib.load(mni_path)
@@ -334,12 +334,12 @@ def data_to_MNI_nifti(input, voxel_size='3'):
     return input_nifti
 
 
-def data_to_MNI_nltools(input, voxel_size='3'):
+def data_to_MNI_nltools(input, voxel_size='3.0'):
     """ MNI nltools.Brain_Data화
 
     Args:
         input (array): input data, mni와 같은 크기여야 함
-        voxel_size (str, optional): 복셀 크기(mm). Defaults to '3'.
+        voxel_size (str, optional): 복셀 크기(mm). Defaults to '3.0'.
 
     Returns:
         nltools.Brain_data
@@ -349,7 +349,7 @@ def data_to_MNI_nltools(input, voxel_size='3'):
     
     nifti = data_to_MNI_nifti(input, voxel_size)
     
-    mni_filename = "MNI_"+str(voxel_size)+"mm_mask"
+    mni_filename = "MNI_"+voxel_size+"mm_mask"
     base = os.path.dirname(__file__)
     mni_path = glob.glob(os.path.join(base, "_data_Atlas", "MNI", mni_filename+"*"))[0]
     
