@@ -99,9 +99,8 @@ python3 /sas2/PECON/7T/NatPAC/code/dcm2bids/run_dcm2bids.py ${sub} ${ses}
         ```json
         {
             "Name": "NatPAC",
-            "bids_path": "/sas2/PECON/7T/NatPAC",    # change to your local bids path
-            "ses-pre02": [
-            ...
+            "bids_path": "/your/bids/path"   
+        }
         ```       
    2. [`run_dcm2bids.py`](./dcm2bids/run_dcm2bids.py)의 default parameters를 수정 
         ```python
@@ -121,5 +120,5 @@ python3 /sas2/PECON/7T/NatPAC/code/dcm2bids/run_dcm2bids.py ${sub} ${ses}
         script_path=/your/run_dcm2bids.py/path    # run_dcm2bids.py를 저장한 path
 
         ### dcm2bids 실행, --custom_config, --input_path 옵션 역시 사용 가능
-        python3 /sas2/PECON/7T/NatPAC/code/dcm2bids/run_dcm2bids.py ${sub} ${ses}
+        python3 ${script_path}/run_dcm2bids.py ${sub} ${ses}
         ```
