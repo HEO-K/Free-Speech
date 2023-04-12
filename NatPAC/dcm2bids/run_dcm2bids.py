@@ -31,7 +31,7 @@ def load_info(ses, filepath=os.path.join(this_path, "project_info.json")):
 
 
 ## Raw 파일 확인하기
-def check_dcm(sub, ses, raw_path="~/Downloads"):
+def check_dcm(sub, ses, raw_path="/mnt/c/Users/Kwon/Downloads"):
     """ bids로 변경할 Raw 파일을 확인, 빠진 run이 있는지와 run 변경 방식 출력
 
     Args:
@@ -415,7 +415,9 @@ def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=True):
 
     # tmp폴더 비우기
     if del_tmp:
-        sp.call("rm -rf "+os.path.join(os.path.join(bids_path, "tmp_dcm2bids", "*")), shell=True)
+        sp.call("rm -rf "+os.path.join(os.path.join(bids_path, 
+                                                    "tmp_dcm2bids", 
+                                                    "sub-"+sub+"_ses-"+ses+"*")), shell=True)
     return 
 
 

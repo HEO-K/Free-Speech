@@ -1,6 +1,6 @@
 {
     "Name": "NatPAC",
-    "bids_path": "/sas2/PECON/7T/NatPAC",
+    "bids_path": "/mnt/d/NatPAC",
     "ses-pre02": [
         {	
 		"type": "anat",

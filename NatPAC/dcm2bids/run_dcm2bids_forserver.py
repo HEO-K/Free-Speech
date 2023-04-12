@@ -6,9 +6,13 @@ import numpy as np
 import subprocess as sp
 
 
-def load_info(ses, filepath='/sas2/PECON/7T/NatPAC/code/dcm2bids/project_info.json'):
-    with open(os.path.join(filepath)) as f:
-        info = json.load(f)
+def load_info(ses, custom_path=None):
+    if custom_path==None:
+        with open(os.path.join(os.path.dirname(__file__), "project_info.json")) as f:
+            info = json.load(f)
+    else:
+        with open(os.path.join(custom_path)) as f:
+            info = json.load(f)
     ses = str(ses)
     try: ses_info = info[ses]
     except:
@@ -51,7 +55,7 @@ def check_dcm(sub, ses, raw_path="/sas2/PECON/7T/NatPAC/sourcedata"):
     elif len(target_list) == 1:
         target_path = target_list[0]
     else:
-        target_path = raw_path
+        raise FileNotFoundError("File "+target_path+" do not exist")
     
     print("---------------------------------------------------------------------------")
     ses_info = load_info(ses)
@@ -366,7 +370,7 @@ def run_dcm2bids(sub, ses, input_path, custom_config=False, del_tmp=False):
     sp.call(command, shell=True)
     
     if del_tmp:
-        sp.call("rm -rf "+os.path.join(os.path.join(bids_path, "tmp_dcm2bids", "*")), shell=True)
+        sp.call("rm -rf "+os.path.join(os.path.join(bids_path, "tmp_dcm2bids", "sub-"+sub+"_ses-"+ses+"*")), shell=True)
     return 
 
 

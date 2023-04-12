@@ -5,7 +5,6 @@ CNIR 서버에서 NatPAC 데이터 bids서식화
 <br/>
 
 ## 0. 파일 설명 (in `./dcm2bids`)
-- [`proc00_dcm2bids.sh`](./proc00_dcm2bids.sh): (임시) NatPAC preprocessing code의 proc00_dcm2bids.sh를 대체하는 코드
 - [`project_info.json`](./dcm2bids/project_info.json): NatPAC session information (for code)
 - [`run_dcm2bids.py`](./dcm2bids/run_dcm2bids.py): 메인 코드
 - [`run_dcm2bids.sh`](./dcm2bids/run_dcm2bids.sh): 위 코드를 bash로 실행하는 코드
@@ -45,7 +44,7 @@ sub=008
 ses=pre02         # XXR, XXa... 도 가능
 
 ### dcm2bids 실행
-python3 /sas2/PECON/7T/NatPAC/code/dcm2bids/run_dcm2bids.py ${sub} ${ses}
+python3 /sas2/PECON/7T/NatPAC/code/HK_dcm2bids/run_dcm2bids.py ${sub} ${ses}
 ```
 
 다음과 같은 순서로 코드가 실행된다.
@@ -91,7 +90,7 @@ python3 /sas2/PECON/7T/NatPAC/code/dcm2bids/run_dcm2bids.py ${sub} ${ses}
     input_path=/your/IMA/path 
 
     ### dcm2bids 실행
-    python3 /sas2/PECON/7T/NatPAC/code/dcm2bids/run_dcm2bids.py ${sub} ${ses} --input_path ${input_path}
+    python3 /sas2/PECON/7T/NatPAC/code/HK_dcm2bids/run_dcm2bids.py ${sub} ${ses} --input_path ${input_path}
     ```    
 3. **Do it at local**\
    [`dcm2bids`](./dcm2bids)폴더를 다운받고 아래 과정을 따라한다.
