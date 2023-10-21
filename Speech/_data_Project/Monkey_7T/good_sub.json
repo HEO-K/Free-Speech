@@ -1,0 +1,43 @@
+{
+    "ses-02": {
+        "movieMONKEY_run-1": [
+            "MK01",
+            "MK02",
+            "MK04",
+            "MK06",
+            "MK09",
+            "MK10"
+        ],
+        "movieMONKEY_run-3": [
+            "MK01",
+            "MK02",
+            "MK04",
+            "MK06",
+            "MK09",
+            "MK10"
+        ],
+        "movieMONKEY_run-4": [
+            "MK01",
+            "MK02",
+            "MK04",
+            "MK06",
+            "MK09",
+            "MK10"
+        ],
+        "movieMONKEY_run-5": [
+            "MK01",
+            "MK02",
+            "MK06",
+            "MK09",
+            "MK10"
+        ],
+        "movieMONKEY_run-2": [
+            "MK02",
+            "MK03",
+            "MK04",
+            "MK06",
+            "MK09",
+            "MK10"
+        ]
+    }
+}

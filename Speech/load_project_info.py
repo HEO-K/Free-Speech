@@ -43,7 +43,8 @@ def get_run_names(Project, ses=None):
             for i in range(1, run["runs"]+1):
                 runnames.append(run["name"]+"_run-"+str(i))
         else: runnames.append(run["name"])
-
+    if "T1" in runnames: runnames.remove("T1")
+        
     return runnames
 
 
@@ -66,12 +67,9 @@ def get_good_sub(Project, ses=None, target_run=None):
         info = json.load(f)
     
     if ses == None:
-        if len(info) > 1: 
-            return(info)
-        else:
-            info = info[0]
+        info = info["info"]
     else:
-        info = info[int(ses)-1]
+        info = info["ses-"+ses]
     
     if target_run == None:
         return(info)
@@ -123,3 +121,34 @@ def get_audio_path(Project, derivatives=True):
     if derivatives: path = os.path.join(path, "derivatives")
     
     return path
+
+
+def get_epi_info(Project, task, ses=None):
+    """ EPI 정보 불러오기
+
+    Args:
+        Project (str): 프로젝트 이름
+        task (str): 과제 이름
+        ses (str, optional): session
+
+    Returns:
+        dict : information dictionary
+    """
+
+    if "_run-" in task:
+        task = task.split("_run-")[0]
+    info = get_full_info(Project)
+    if ses: 
+        ses = str(ses)
+        info = info[f"ses-{ses}"]
+    else:
+        info = info["info"]
+    
+    find = 0
+    for runs in info:
+        if runs["name"] == task:
+            find = 1
+            return runs
+    if find == 0:
+        raise KeyError(f"Cannot find {task}")
+    

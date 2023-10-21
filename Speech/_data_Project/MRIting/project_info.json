@@ -2,122 +2,128 @@
     "Name": "MRIting",
     "bids_path": "/mnt/d/MRIting/_DATA_fMRI",
     "bids_path_window": "D:/MRIting/_DATA_fMRI",
-    "ses-1": [
+    "audio_path": "/mnt/d/MRIting/_DATA_Behavior",
+    "audio_path_window": "D:/MRIting/_DATA_Behavior",
+    "ses-01": [
         {
             "name": "acq-GRE",
-		"type": "fmap",
-		"modality": "magnitude" 
+            "type": "fmap",
+            "modality": "magnitude"
         },
         {
             "name": "acq-GRE",
-		"type": "fmap",
-		"modality": "phase" 
+            "type": "fmap",
+            "modality": "phase"
         },
         {
             "name": "dir-AP",
-		"type": "fmap",
-		"modality": "epi" 
+            "type": "fmap",
+            "modality": "epi"
         },
         {
             "name": "RATING",
+            "type": "func",
             "runs": 6,
-		"type": "func",
-		"modality": "bold" 
+            "modality": "bold"
         },
         {
             "name": "INTRO",
+            "type": "func",
             "runs": 3,
-		"type": "func",
-		"modality": "bold" 
+            "modality": "bold"
         },
         {
             "name": "CHATTING",
-		"type": "func",
-		"modality": "bold" 
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
         },
         {
             "name": "T1",
-		"type": "anat",
-		"modality": "T1w"
+            "type": "anat",
+            "modality": "T1w"
         },
         {
             "name": "inv-1",
-		"type": "anat",
-		"modality": "MP2RAGE" 
+            "type": "anat",
+            "modality": "MP2RAGE"
         },
         {
             "name": "inv-2",
-		"type": "anat",
-		"modality": "MP2RAGE" 
+            "type": "anat",
+            "modality": "MP2RAGE"
         },
         {
             "name": "rec-DERIVED",
-		"type": "anat",
-		"modality": "UNIT1" 
+            "type": "anat",
+            "modality": "UNIT1"
         },
         {
             "name": "TRUTHLIE",
-		"type": "func",
-		"modality": "bold" 
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
         }
     ],
-    "ses-2": [
+    "ses-02": [
         {
             "name": "acq-GRE",
-		"type": "fmap",
-		"modality": "magnitude" 
+            "type": "fmap",
+            "modality": "magnitude"
         },
         {
             "name": "acq-GRE",
-		"type": "fmap",
-		"modality": "phase" 
+            "type": "fmap",
+            "modality": "phase"
         },
         {
             "name": "dir-AP",
-		"type": "fmap",
-		"modality": "epi" 
+            "type": "fmap",
+            "modality": "epi"
         },
         {
             "name": "RECALL",
+            "type": "func",
             "runs": 3,
-		"type": "func",
-		"modality": "bold" 
+            "modality": "bold"
         },
         {
             "name": "RESTING",
-		"type": "func",
-		"modality": "bold" 
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
         },
         {
             "name": "SPEECH",
-		"type": "func",
-		"modality": "bold" 
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
         },
         {
             "name": "T1",
-		"type": "anat",
-		"modality": "T1w"
+            "type": "anat",
+            "modality": "T1w"
         },
         {
             "name": "inv-1",
-		"type": "anat",
-		"modality": "MP2RAGE" 
+            "type": "anat",
+            "modality": "MP2RAGE"
         },
         {
             "name": "inv-2",
-		"type": "anat",
-		"modality": "MP2RAGE" 
+            "type": "anat",
+            "modality": "MP2RAGE"
         },
         {
             "name": "rec-DERIVED",
-		"type": "anat",
-		"modality": "UNIT1" 
+            "type": "anat",
+            "modality": "UNIT1"
         },
         {
             "name": "MOVIE",
+            "type": "func",
             "runs": 3,
-		"type": "func",
-		"modality": "bold" 
+            "modality": "bold"
         }
     ]
 }

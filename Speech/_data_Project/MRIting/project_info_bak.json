@@ -1,0 +1,243 @@
+{
+    "Name": "MRIting",
+    "bids_path": "/mnt/d/MRIting/_DATA_fMRI",
+    "bids_path_window": "D:/MRIting/_DATA_fMRI",
+    "audio_path": "/mnt/d/MRIting/_DATA_Behavior",
+    "audio_path_window": "D:/MRIting/_DATA_Behavior",
+    "ses-1": [
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "magnitude" 
+        },
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "phase" 
+        },
+        {
+            "name": "dir-AP",
+		"type": "fmap",
+		"modality": "epi" 
+        },
+        {
+            "name": "RATING",
+            "runs": 6,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "INTRO",
+            "runs": 3,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "CHATTING",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "T1",
+		"type": "anat",
+		"modality": "T1w"
+        },
+        {
+            "name": "inv-1",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "inv-2",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "rec-DERIVED",
+		"type": "anat",
+		"modality": "UNIT1" 
+        },
+        {
+            "name": "TRUTHLIE",
+		"type": "func",
+		"modality": "bold" 
+        }
+    ],
+    "ses-2": [
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "magnitude" 
+        },
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "phase" 
+        },
+        {
+            "name": "dir-AP",
+		"type": "fmap",
+		"modality": "epi" 
+        },
+        {
+            "name": "RECALL",
+            "runs": 3,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "RESTING",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "SPEECH",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "T1",
+		"type": "anat",
+		"modality": "T1w"
+        },
+        {
+            "name": "inv-1",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "inv-2",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "rec-DERIVED",
+		"type": "anat",
+		"modality": "UNIT1" 
+        },
+        {
+            "name": "MOVIE",
+            "runs": 3,
+		"type": "func",
+		"modality": "bold" 
+        }
+    ],
+    "ses-01": [
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "magnitude" 
+        },
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "phase" 
+        },
+        {
+            "name": "dir-AP",
+		"type": "fmap",
+		"modality": "epi" 
+        },
+        {
+            "name": "RATING",
+            "runs": 6,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "INTRO",
+            "runs": 3,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "CHATTING",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "T1",
+		"type": "anat",
+		"modality": "T1w"
+        },
+        {
+            "name": "inv-1",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "inv-2",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "rec-DERIVED",
+		"type": "anat",
+		"modality": "UNIT1" 
+        },
+        {
+            "name": "TRUTHLIE",
+		"type": "func",
+		"modality": "bold" 
+        }
+    ],
+    "ses-02": [
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "magnitude" 
+        },
+        {
+            "name": "acq-GRE",
+		"type": "fmap",
+		"modality": "phase" 
+        },
+        {
+            "name": "dir-AP",
+		"type": "fmap",
+		"modality": "epi" 
+        },
+        {
+            "name": "RECALL",
+            "runs": 3,
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "RESTING",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "SPEECH",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "T1",
+		"type": "anat",
+		"modality": "T1w"
+        },
+        {
+            "name": "inv-1",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "inv-2",
+		"type": "anat",
+		"modality": "MP2RAGE" 
+        },
+        {
+            "name": "rec-DERIVED",
+		"type": "anat",
+		"modality": "UNIT1" 
+        },
+        {
+            "name": "MOVIE",
+            "runs": 3,
+		"type": "func",
+		"modality": "bold" 
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "Name": "Paranoia",
+    "bids_path": "/mnt/e/Paranoia/_DATA_fMRI",
+    "bids_path_window": "E:/Paranoia/_DATA_fMRI",
+    "audio_path": "/mnt/e/Paranoia/_DATA_Audio",
+    "audio_path_window": "E:/Paranoia/_DATA_Audio",
+    "info": [
+        {
+            "name": "story1",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "story2",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "story3",
+		"type": "func",
+		"modality": "bold" 
+        },
+        {
+            "name": "T1",
+		"type": "anat",
+		"modality": "T1w"
+        }
+    ]
+}

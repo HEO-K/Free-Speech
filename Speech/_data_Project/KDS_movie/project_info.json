@@ -1,0 +1,13 @@
+{
+    "Name": "KDS_movie",
+    "bids_path": "/mnt/d/KDS_movie/_DATA_fMRI",
+    "bids_path_window": "D:/KDS_movie/_DATA_fMRI",
+    "audio_path": "/mnt/d/KDS_movie/_DATA_Audio",
+    "audio_path_window": "D:/KDS_movie/_DATA_Audio",
+    "info": [
+        {
+            "name": "recall",
+            "runs": 3
+        }
+    ]
+}

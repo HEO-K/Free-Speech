@@ -1,0 +1,15 @@
+{
+    "Name": "Pieman",
+    "bids_path": "/mnt/e/narratives",
+    "bids_path_window": "E:/narratives",
+    "audio_path": "/mnt/e/narratives",
+    "audio_path_window": "E:/narratives",
+    "info": [
+        {
+            "name": "pieman",
+		"type": "func",
+		"modality": "bold",
+		"runs": 2
+        }
+    ]
+}

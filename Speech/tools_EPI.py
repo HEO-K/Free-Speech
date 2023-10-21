@@ -27,7 +27,7 @@ def get_epipath(Project, sub, taskname, ses=None):
         filepath = os.path.join(base, "derivatives", "sub-"+sub, "func", epi_name)
     else:
         ses = str(ses)
-        epi_name = "sub-"+sub+"ses-"+ses+"_task-"+taskname+"_sc_dt_hp_sm.nii.gz"
+        epi_name = "sub-"+sub+"_ses-"+ses+"_task-"+taskname+"_sc_dt_hp_sm.nii.gz"
         filepath = os.path.join(base, "derivatives", "sub-"+sub, "ses-"+ses, "func", epi_name)
     
     return(filepath)
@@ -36,7 +36,7 @@ def get_epipath(Project, sub, taskname, ses=None):
 
 #############################################################################################
 # load epi
-def loader(Project, sub, taskname, ses=None, confound_interp='linear', zscoring=True):
+def loader(Project, sub, taskname, ses=None, confound_interp='linear', zscoring=True, dtype="float16"):
     """ EPI를 불러오기
 
     Args:
@@ -46,7 +46,7 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear', zscoring=
         ses (str, optional): ses 번호. Defaults to None.
         confound_interp (str, optional): FD>0.5이상을 처리하는 방법. Defaults to 'linear'.
         zscoring (bool, optional): zscoring 여부. Defaults to True.
-        
+        dtype (str, optional): 데이터 형식
     Returns: 
         4d EPI array
     """
@@ -61,18 +61,18 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear', zscoring=
     
     try:   # npy존재
         epi = np.load(npypath)
-        fov = list(epi.shape[:-1])
-        tr = epi.shape[-1]
-        epi = epi.reshape(-1,tr)
         
 
     except:
-        epi = np.array(nib.load(filepath).get_fdata())
+        epi = np.array(nib.load(filepath).get_fdata()).astype(dtype)
         
         # shape info
         fov = list(epi.shape[:-1])
         tr = epi.shape[-1]
         epi = epi.reshape(-1,tr)
+        # zscore
+        if zscoring:
+            epi = zscore(epi, axis=1)
         
         # interp
         if not confound_interp == False:
@@ -86,13 +86,10 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear', zscoring=
             epi = np.array(epi).T.reshape((-1,tr))
 
         np.save(npypath, epi.reshape(fov+[tr]))
+        epi = epi.reshape(fov+[tr])
 
-    # zscore
-    if zscoring:
-        epi = zscore(epi, axis=1)
 
     # return
-    epi = epi.reshape(fov+[tr])
     return(epi)
 
 
@@ -236,6 +233,42 @@ def parcel_averaging(parcel, epi, size='3.0'):
         avg_parcel.append(np.nanmean(epi[data==num,:], axis=0))
     return(np.array(avg_parcel))
 
+
+def get_parcel_roi_mask(parcel, roi, size="3.0"):
+    """
+    Parcel에서 roi mask 불러오기
+
+    Args:
+        parcel: atlas, 아래 세 종류의 input 가능
+            \- atlas에 있는 이름 (ex, Schaefer2018_<N>Parcels_<7/17>Networks)
+            \- result of get_atlas [info, data], info를 기준으로 평균.
+            \- atlas array
+        roi: roi index의 list 또는 숫자.
+        size (number, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm). Defaults to 3mm.
+
+    Returns: 
+        Mask of roi (boolean array)
+        
+    """
+    # load parcel
+    if type(parcel) == str:
+        [info, data] = get_atlas(parcel, size)
+        numbers = np.array(info[:,0], int)
+    else:
+        if len(parcel) == 2:
+            data = parcel[1]
+            info = parcel[0]
+            numbers = np.array(info[:,0], int)
+        else:
+            data = np.nan_to_num(parcel)
+            numbers = list(set(list(data.reshape(-1)))-{0})
+    # get roi
+    mask = np.zeros_like(data)
+    try:
+        for i in roi: mask = np.logical_or(mask, data==i)
+    except: mask = data==roi
+    return mask.astype(bool)      
+        
         
 def network_cluster(parcel, epi, size='3', averaging=False):
     """ Yeo network별로 epi를 나눈 딕셔너리
@@ -330,7 +363,7 @@ def data_to_MNI_nifti(input, voxel_size='3.0'):
     mni_path = glob.glob(os.path.join(base, "_data_Atlas", "MNI", mni_filename+"*"))[0]
     mni = nib.load(mni_path)
         
-    input_nifti = nib.Nifti1Image(input, mni.affine)   
+    input_nifti = nib.Nifti1Image(input, mni.affine, mni.header)   
     return input_nifti
 
 

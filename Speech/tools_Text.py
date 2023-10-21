@@ -2,7 +2,7 @@ import os
 import numpy as np
 import glob
 
-def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limiting=True, threshold=1.8):
+def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limiting=True, threshold=3.5):
     """ Audio boundary 읽어오기
 
     Args:
@@ -15,10 +15,12 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
             - sentence: 문장 종료
             - silence: 침묵 시작
             - sen_limited: 주제 변환 아닌 문장 종료 중 쉬는 시간 길이 비슷한 같은 수의 주제
+            - long_pause: 길게 쉰 문장 종료
+            - center: ev1 중심
         ses (str or int, optional): session number, Defaults to None.
         tr (float, optional): TR (초)
         limiting (bool, optional): 주제와 중복되지 않는 silence, sentence. Defaults to True.
-        threshold (float, optional): silence 기준(초). Defaults to 1.8.
+        threshold (float, optional): silence 기준(초). Defaults to 3.5TR.
 
         
     Returns:
@@ -32,6 +34,8 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
     
     if boundary == "ev1" or boundary == "ev2":
         filename = "*"+runname+"_event.txt"
+    elif boundary == "center":
+        filename = "*"+runname+"_event.txt"
     elif boundary == "silence": 
         filename = "*"+runname+"_"+boundary+".txt"
     else:
@@ -40,7 +44,7 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
     try:
         filepath = glob.glob(os.path.join(audio_path,filename))[0]
     except:
-        return "No files"
+        raise FileNotFoundError(f"sub-{sub}_task-{filename} don't exist")
     
     
     if boundary == "sen_limited":
@@ -56,37 +60,56 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
         sen_end = np.array(sen_end, dtype=int)
         
         # 같은 것은 솎아내기
-        sen_end = set(sen_end) - set(ev1_end)
-        sen_end = list(sen_end)
-        sen_end.sort()
-        sen_end = np.array(sen_end)
-        
-        # ev1의 침묵 시간
-        ev1_sil = []
-        for ev1 in ev1_end:
-            try:
-                index = np.where(times[:,1]==ev1)[0][0]
-                ev1_sil.append(times[index+1,0]-times[index,1])
-            except: pass
-            
-        ev1_sil_mean = np.mean(ev1_sil)
+        sen_end = np.setdiff1d(sen_end, ev1_end)
+        if len(sen_end) == 0:
+            return "no boundary"
+        elif len(sen_end) > len(ev1_end):
+            # ev1의 침묵 시간
+            ev1_sil = []
+            for ev1 in ev1_end:
+                try:
+                    index = np.where(times[:,1]==ev1)[0][0]
+                    ev1_sil.append(times[index+1,0]-times[index,1])
+                except: pass
                 
-        # sentence의 침묵 시간
-        sen_sil = []
-        for sen in sen_end:
-            try:
-                index = np.where(times[:,1]==sen)[0][0]
-                sen_sil.append([times[index+1,0]-times[index,1],sen])
-            except: pass
-        sen_sil = np.array(sen_sil)
-          
-        sen_sil_diff = np.absolute(sen_sil[:,0]-ev1_sil_mean)
-        from scipy.stats import rankdata
-        sen_sim = sen_sil[rankdata(sen_sil_diff)<len(ev1_end)+1,1]
+            ev1_sil_mean = np.mean(ev1_sil)
+                    
+            # sentence의 침묵 시간
+            sen_sil = []
+            for sen in sen_end:
+                try:
+                    index = np.where(times[:,1]==sen)[0][0]
+                    sen_sil.append([times[index+1,0]-times[index,1],sen])
+                except: pass
+            sen_sil = np.array(sen_sil)
+            
+            sen_sil_diff = np.absolute(sen_sil[:,0]-ev1_sil_mean)
+            from scipy.stats import rankdata
+            sen_sim = sen_sil[rankdata(sen_sil_diff)<len(ev1_end)+1,1]
 
+            tr = tr*1000
+            ev = np.array(sen_sim/tr, int)
+        else:
+            tr = tr*1000
+            ev = np.array(sen_end/tr, int)
+    elif boundary == 'long_pause':
+        ev = []
         tr = tr*1000
-        ev = np.round(sen_sim/tr).astype(int)
-        
+        FA = np.array(load_FA(Project, sub, runname, ses))[:,:2].astype(int)
+        with open(filepath, 'r') as f:
+            sen = f.readlines() 
+        sen = np.array(sen, int) 
+        sen_FA = [[FA[0,0], sen[0]]]
+        for t in range(len(sen)-1):
+            try:
+                end = np.where(FA[:,1]==sen[t])[0][0]
+                sen_FA.append([FA[end+1,0],sen[t+1]])
+            except: pass
+        sen_FA = np.array(sen_FA)
+        for i in range(sen_FA.shape[0]-1):
+            if sen_FA[i+1,0]-sen_FA[i,1]>threshold*tr: ev.append(sen_FA[i,1])
+        ev = np.array(np.array(ev)/tr, int)        
+                 
     else:
         tr = tr*1000
         
@@ -96,17 +119,27 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
         ev = list(filter(None, ev))
         if boundary == "ev1":
             ev = ev[ev.index("[1]\n")+1:ev.index("[2]\n")]
-        if boundary == "ev2":
+        elif boundary == "ev2":
             ev = ev[ev.index("[2]\n")+1:]
-        if boundary == "silence":
+        elif boundary == "silence":
             ev = list(filter(None,ev[0].split("\t")))
             for i in range(len(ev)):
                 ev[i] = ev[i].split(":")
             ev = np.array(ev)
             ev = np.array(ev, float)
             ev = ev[ev[:,1]>threshold*tr,0]
-        ev = np.round(np.array(ev, float)/tr)
-        ev = np.array(ev, int)
+        
+        elif boundary == 'center':
+            ev = ev[ev.index("[1]\n")+1:ev.index("[2]\n")]
+            ev = np.array(ev, float)
+            center = [ev[0]/2]
+            for i in range(len(ev)-1):
+                center.append(ev[i]/2+ev[i+1]/2)
+            ev = center
+                
+        
+        ev = (np.array(ev, float)/tr).astype(int)
+        
         
         if boundary == "silence" or boundary == "sentence":
             if limiting:
@@ -114,22 +147,22 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
                     evs = f.readlines()
                 evs = list(filter(None, evs))
                 ev1 = evs[evs.index("[1]\n")+1:evs.index("[2]\n")]
-                ev1 = np.round(np.array(ev1, int)/tr)
-                ev1 = np.array(ev1, int)
+                ev1 = np.array(np.array(ev1, int)/tr, int)
                 ev2 = evs[evs.index("[2]\n")+1:]
-                ev2 = np.round(np.array(ev2, int)/tr)
-                ev2 = np.array(ev2, int)
+                ev2 = np.array(np.array(ev2, int)/tr, int)
+
                 
                 try:
-                    for i in range(-10,11):
-                        ev = np.array(list(set(ev)-set(ev1+i)-set(ev2+i)))
+                    for i in range(-3,4):
+                        ev = np.setdiff1d(ev, ev1+i)
+                        ev = np.setdiff1d(ev, ev2+i)
                 except:
                     print("there's no independent "+ boundary+". just return all")
                     
                 ev.sort() 
-            
-
         
+           
+    
 
         
     return ev
@@ -272,3 +305,65 @@ def get_phrase_FA(Project, sub, runname, ses=None):
         line_start += len(line["word"])
     
     return(phrase_FA)
+
+
+def get_sentence_FA(Project, sub, runname, ses=None):
+    """ 문장 단위의 FA 
+
+    Args:
+        Project (str): 프로젝트명
+        sub (str): sub number
+        runname (str): task이름, ex) speechTOPIC_run-1
+        ses (str or int, optional): session number, Defaults to None.
+        
+    Returns:
+        [start, end, sentence]의 리스트
+
+    """
+
+    FA = load_FA(Project, sub, runname, ses=ses)
+    words = np.array(FA)[:,-1]
+    
+    s = 0
+    
+    sen_FA = []
+    for i in range(1,len(words)):
+        if words[i][-1] == ".":
+            sen_FA.append([FA[s][0], FA[i][1], " ".join(words[s:i+1])])
+            s = i+1
+    if sen_FA[-1][1] != FA[-1][1]:
+        sen_FA.append([FA[s][0], FA[-1][1], " ".join(words[s:])])
+    
+    return(sen_FA)
+
+
+def load_episode_score(Project, sub, runname, ses=None):
+    """ 문장 episode score 불러오기 
+
+    Args:
+        Project (str): 프로젝트명
+        sub (str): sub number
+        runname (str): task이름, ex) speechTOPIC_run-1
+        ses (str or int, optional): session number, Defaults to None.
+        
+    Returns:
+        1d array
+
+    """
+    from . import load_project_info
+    audio_path = load_project_info.get_audio_path(Project,derivatives=True)
+    audio_path = os.path.join(audio_path, "sub-"+sub)
+    if ses != None:
+        audio_path = os.path.join(audio_path, "ses-"+str(ses))
+    
+    filename = f"*task-{runname}_episode.txt"
+    filepath = glob.glob(os.path.join(audio_path, filename))[0]
+    with open(filepath, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    score = []
+    for line in lines:
+        try: 
+            score.append(int(line))
+        except: 
+            pass
+    return np.array(score, int)

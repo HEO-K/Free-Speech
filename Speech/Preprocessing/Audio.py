@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 # STT
-def Clova_STT(file_path):
+def Clova_STT(file_path, lang="ko-KR"):
     """ 오디오 파일 위치에 받아쓰기 결과(_STT.txt) & 단어 정렬 결과(_FA.txt) 저장
     
         Args: 
@@ -15,7 +15,7 @@ def Clova_STT(file_path):
     invoke_url = 'https://clovaspeech-gw.ncloud.com/external/v1/2227/2752bda02f64f65c39aef44ddfe935dd3a6a7c9c061e687484f67707ee3f975c'
     secret = '03bbf8f1bea54866bbd108c26845160e'          
     request_body = {
-        'language': 'ko-KR',
+        'language': lang,
         'completion': 'sync',
         'callback': None,
         'userdata': None,
@@ -52,7 +52,6 @@ def Clova_STT(file_path):
     for i in range(len(FA)):
         f_FA.write('{0:<8}{1:<8}{2}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2])))
     f_FA.close()
-    return "Finished"
 
 
 # second processing
@@ -63,12 +62,15 @@ def apply_FA(file_path):
             file_path (str): _FA_new.txt 파일 경로
     """
     STT_new = []
-    f_FA_new = open(file_path, 'r', encoding="utf-8")
+    try: f_FA_new = open(file_path, 'r', encoding="utf-8")
+    except: f_FA_new = open(file_path.replace(".wav", "_audio.wav"), 'r', encoding="utf-8")
     FA_new_lines = f_FA_new.readlines()
     for line in FA_new_lines:
-        if line:
-            word = line.split()[-1]
+        try:
+            word = " ".join(line.split()[2:])
             STT_new.append(word)
+        except:
+            pass
 
     STT_new = " ".join(STT_new).split(". ")
     f_stt_new = open(file_path[:-11]+"_STT_new.txt", 'w', encoding="utf-8")
@@ -78,7 +80,6 @@ def apply_FA(file_path):
         else:
             f_stt_new.write(STT_new[i]+".\n")
     f_stt_new.close()
-    return "Finished"
 
 
 # audiostamp
@@ -89,6 +90,7 @@ def audiostamp(input, output_folder="./"):
         input (str): *_FA_new.txt
         output_folder (str, optional): 결과 파일 위치. Defaults to "./".
     """
+    os.makedirs(output_folder, exist_ok=True)
     with open(input, 'r', encoding="utf-8") as f:
         text = f.readlines()
     # speech time

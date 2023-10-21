@@ -132,7 +132,7 @@ def check_dcm(Project, input_path, ses = None):
             if "magnitude" in runname:  # magnitude로만 완성
                 check_results[runname] = []
                 check_results[runname.replace("magnitude", 'phase')] = []
-                run_exp = re.compile("GRE-FIELD-MAPPING")  # gre_run이름
+                run_exp = re.compile("GRE")  # gre_run이름
                 checked_run = []
                 for folder_name in run_folders:
                     if len(run_exp.findall(folder_name))>0:
@@ -354,7 +354,6 @@ def run_dcm2bids(Project, sub, input_path, ses=None):
     sp.call(command, shell=True)
     
     sp.call("rm -rf "+os.path.join(os.path.join(bids_path, "tmp_dcm2bids", "*")), shell=True)
-    return 
 
 
 
@@ -462,7 +461,7 @@ def DN(Project, sub, runname, ses=None):
 
     # cleaning
     fmri_clean = clean_data(fmri_data, fmri_compounds)
-    ffmri_clean = fmri_clean.astype(np.float32)
+    fmri_clean = fmri_clean.astype(np.float32)
     new_image = np.zeros(mni_mask.shape+(fmri_data.shape[0],), dtype=np.float32)
     new_image[mni_mask==1,:] = fmri_clean.T
 
@@ -474,11 +473,12 @@ def DN(Project, sub, runname, ses=None):
     print(os.path.basename(file_path).split("_space")[0]+" denosing finished")
     print("---------------------------------------------------------------------")
 
-    return 
+
 
 # save motion & FD checking
-def save_motion(Project, sub, ses=None):
+def save_motion(Project, sub, ses=None, threshold=0.05):
     import matplotlib.pyplot as plt
+    from scipy.stats import sem
 
     # 정보 불러오기.
     info = get_full_info(Project) 
@@ -512,6 +512,9 @@ def save_motion(Project, sub, ses=None):
     # plot
     plt.figure(figsize=(20,2.5*len(files)))
     plt.subplots_adjust(hspace=0.5)
+    
+    summary_stat = dict()
+    
     for file, i in zip(files, range(len(files))):
         task = file.split("task-")[1].split("_desc")[0]
         print(task)
@@ -530,26 +533,24 @@ def save_motion(Project, sub, ses=None):
             f.write("\n".join(motion_confound))
 
         # save subjects
-        if np.mean(fd>0.5) < 0.05: # FD>0.5인 구간이 5% 미만
+        if np.mean(fd>0.5) < threshold: # FD>0.5인 구간이 5% 미만
             good_sub_path = __file__
             good_sub_path = os.path.abspath(os.path.join(good_sub_path, "..", ".."))
             good_sub_path = os.path.join(good_sub_path, "_data_Project", Project, "good_sub.json")
-            if ses == None: ses_index = 0
-            else: ses_index = int(ses)-1
-
+            if ses == None: ses_index = "info"
+            else: ses_index = "ses-"+ses
             try:
                 with open(good_sub_path) as f:
                     good_sub = json.load(f)
-                if ses == None: ses_index = 0
-                else: ses_index = int(ses)-1
+
                 if task in good_sub[ses_index].keys():
                     if sub not in good_sub[ses_index][task]: good_sub[ses_index][task].append(sub)
                 else:
                     good_sub[ses_index][task] = [sub]
                 f.close()
             except:
-                good_sub = []
-                for n in range(ses_index+1): good_sub.append({})
+                good_sub = dict()
+                good_sub[ses_index] = dict()
                 good_sub[ses_index][task] = [sub]
             with open(good_sub_path, "w", encoding="utf-8") as f:
                 json.dump(good_sub, f, indent=4)
@@ -569,24 +570,159 @@ def save_motion(Project, sub, ses=None):
         plt.ylim([-0.05,0.05])
         plt.subplot(len(files), 3, 3+3*i)
         plt.plot(fd, color='k')
-        plt.text(np.argmax(fd), np.max(fd+0.03), str(np.round(np.max(fd),2)), 
-            horizontalalignment='center')
+        if np.max(fd)>1.5:
+            plt.text(np.argmax(fd), 1.53, str(np.round(np.max(fd),2)), 
+                horizontalalignment='center')
+        else:
+            plt.text(np.argmax(fd), np.max(fd)+0.03, str(np.round(np.max(fd),2)), 
+                horizontalalignment='center')
         plt.ylim([0,1.5])
         plt.axhline(y=0.5, color='r', linestyle = "--", linewidth=2)
         plt.ylabel("FD")
+        
+        summary_stat[task] = fd
     # save
+    os.makedirs(fig_path, exist_ok=True)
     if ses == None:
         fig_path = os.path.join(fig_path, "sub-"+sub+"_motion.png")
     else:
         fig_path = os.path.join(fig_path, "sub-"+sub+"_ses-"+ses+"_motion.png")
-       
+    
+    if os.path.isfile(fig_path): os.remove(fig_path)
     plt.savefig(fig_path, dpi=200)
+    
+    
+    # save summary image
+    fig_path = os.path.join(sub_path,'figures')
+    plt.figure(figsize=(1.5*len(summary_stat),5))
+    plt.xticks(np.arange(len(summary_stat.keys())), list(summary_stat.keys()), rotation=30)
+    plt.ylim(0,0.5)
+    plt.ylabel("FD")
+    for i, task in enumerate(summary_stat.keys()):
+        plt.bar(i, np.nanmean(summary_stat[task]), yerr=sem(summary_stat[task]), color='grey')
+        outlier_ratio = str(np.round(np.mean(summary_stat[task]>0.5),3))
+        plt.text(i, np.nanmean(summary_stat[task])+sem(summary_stat[task])+0.02, outlier_ratio,
+                 horizontalalignment='center')
+    if ses == None:
+        fig_path = os.path.join(fig_path, "sub-"+sub+"_motion_summary.png")
+    else:
+        fig_path = os.path.join(fig_path, "sub-"+sub+"_ses-"+ses+"_motion_summary.png")
+    
+    if os.path.isfile(fig_path): os.remove(fig_path)
+    plt.savefig(fig_path, dpi=200, bbox_inches = 'tight')   
+    
     print("---------------------------------------------------------------------")
     print("sub-"+sub+" motion plot is saved")
     print("---------------------------------------------------------------------")
 
-    return()
 
+def save_tsnr(Project, sub, ses=None):
+    import matplotlib.pyplot as plt
+    import nibabel as nib
+    from tqdm import tqdm
+    from scipy.stats import sem
+    
+    # 정보 불러오기.
+    info = get_full_info(Project) 
+    # 피험자 위치
+    if isWSL():
+        sub_path = os.path.join(info['bids_path'], "derivatives", "sub-"+sub)
+    else:
+        sub_path = os.path.join(info['bids_path_window'], "derivatives", "sub-"+sub)
+    fig_path = os.path.join(sub_path,'figures')
+    # run 정보
+    if ses == None:
+        run_info = info['info']
+        func_path = os.path.join(sub_path, "func")
+    else:
+        run_info = info["ses-"+ses]  
+        func_path = os.path.join(sub_path, "ses-"+ses, "func")
+    runnames = []
+    for run in run_info:
+        if 'runs' in run.keys():
+            for i in range(1, run["runs"]+1):
+                runnames.append(run["name"]+"_run-"+str(i))
+        else: runnames.append(run["name"])
+
+    # 존재하는 파일만 사용한다.
+    files = []
+    for name in runnames:
+        file_path = glob.glob(os.path.join(func_path, 
+                                           "*"+name+"*space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"))
+        if len(file_path)>0: files.append(file_path[0])
+    
+    # Yeo network에 들어오는 값만 사용한다.
+    vox = str(nib.load(files[0]).header.get_zooms()[0])
+    from Speech.tools_EPI import get_atlas
+    atlas = get_atlas("Yeo2011_7Networks_tight", size=vox)[1]
+    mask = atlas>0
+    
+    
+    plt.figure(figsize=(1.5*len(files),5))
+    tasknames = []
+    tsnr_map = []
+    for i, file in tqdm(enumerate(files), "Plotting summary tSNR"):
+        tasknames.append(file.split("task-")[1].split("_space")[0])
+        epi = nib.load(file).get_fdata()
+        mean_d = np.mean(epi,axis=-1)
+        std_d = np.std(epi,axis=-1)
+        tsnr = mean_d/std_d
+        tsnr_map.append(tsnr)
+        tsnr_brain = tsnr[mask]
+        tsnr_brain = tsnr_brain[~np.isnan(tsnr_brain)]
+        plt.bar(i, np.mean(tsnr_brain), yerr=sem(tsnr_brain), color="grey")
+    plt.xticks(np.arange(len(files)), tasknames, rotation=30)
+    plt.ylabel("tSNR")
+    
+    # save summary
+    if ses == None:
+        fig_file = os.path.join(fig_path, "sub-"+sub+"_tsnr_summary.png")
+    else:
+        fig_file = os.path.join(fig_path, "sub-"+sub+"_ses-"+ses+"_tsnr_summary.png")
+    
+    if os.path.isfile(fig_file): os.remove(fig_file)
+    plt.savefig(fig_file, dpi=200, bbox_inches = 'tight')       
+    
+    
+    
+    # plot network tsnr
+    colors = [[120,18,134],
+              [70,130,180],
+              [0,118,14],
+              [196,58,250],
+              [220,248,164],
+              [230,148,34],
+              [205,62,78]]
+    colors = np.array(colors)/255
+    network = ["Visual", "SomMot", "DorsAttn", "VentAttn", "Limbic", "Control", "Default"]
+    plt.figure(figsize=(10,2.5*len(files)))
+    plt.subplots_adjust(hspace=0.5)
+    
+    for i, file in tqdm(enumerate(files), "Plotting network tSNR"):
+        task = file.split("task-")[1].split("_space")[0]
+        tsnr = tsnr_map[i]
+        plt.subplot(len(files), 1, 1+i)
+        plt.title(task)
+        for n in range(7):
+            tsnr_net = tsnr[atlas==n+1]
+            tsnr_net = tsnr_net[~np.isnan(tsnr_net)]
+            plt.bar(n, np.mean(tsnr_net), yerr=sem(tsnr_net), color=colors[n], ecolor=colors[n], alpha=0.3)
+        plt.xticks(np.arange(7), network)
+        plt.ylabel("tSNR")
+        
+    # save 
+    if ses == None:
+        fig_file = os.path.join(fig_path, "sub-"+sub+"_tsnr.png")
+    else:
+        fig_file = os.path.join(fig_path, "sub-"+sub+"_ses-"+ses+"_tsnr.png")
+    
+    if os.path.isfile(fig_file): os.remove(fig_file)
+    plt.savefig(fig_file, dpi=200, bbox_inches = 'tight')               
+        
+    print("---------------------------------------------------------------------")
+    print("sub-"+sub+" tSNR plot is saved")
+    print("---------------------------------------------------------------------")       
+        
 
 
 def sc_dt_hp_sm(Project, sub, runname, ses=None):
@@ -637,9 +773,11 @@ def sc_dt_hp_sm(Project, sub, runname, ses=None):
     print("---------------------------------------------------------------------")
 
     # Spatial Smoothing
-    if vox == 2: FWHM = 3
-    if vox == 2.5: FWHM = 4
-    if vox == 3: FWHM = 5
+    if vox == 1.5: FWHM = 2
+    elif vox == 2: FWHM = 3
+    elif vox == 2.5: FWHM = 4
+    elif vox == 3: FWHM = 5
+    else: FWHM = vox
     sp.call(f'3dmerge -quiet -1blur_fwhm {FWHM} -doall -prefix {SM_HP_fname} {HP_fname}', shell=True)
     sp.call(f"cp {SM_HP_fname} {final_fname}", shell=True)
     print("---------------------------------------------------------------------")

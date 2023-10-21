@@ -1,0 +1,183 @@
+{
+    "Name": "NatPAC_speech",
+    "bids_path": "/mnt/d/NatPAC/_DATA_fMRI",
+    "bids_path_window": "D:/NatPAC/_DATA_fMRI",
+    "audio_path": "/mnt/d/NatPAC/_DATA_Audio",
+    "audio_path_window": "D:/NatPAC/_DATA_Audio",
+    "ses-01": [
+        {
+            "name": "speechFREE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-01R": [
+        {
+            "name": "speechFREE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-02": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-02R": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-03": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-03R": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-04": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-04R": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-07": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-07R": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-08": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-08R": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-09": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-09R": [
+        {
+            "name": "speechMOVIE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-10": [
+        {
+            "name": "speechTOPICS",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-10R": [
+        {
+            "name": "speechTOPICS",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-11": [
+        {
+            "name": "speechFREE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-11R": [
+        {
+            "name": "speechFREE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-13": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-13R": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-14": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-14R": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ]
+}

@@ -9,29 +9,35 @@ def good_subs(taskname, exception=[]):
     """ speech_3T의 피험자 불러오기
 
     Args:
-        taskname (str): 과제명 (TA, 3, Z, S, LTA, L3, L, R)
+        taskname (str): 과제명 (TA, 3, 3H, Z, S, LTA, L3, L, R, M, A)
             \- TA: think aloud
             \- 3: three topics
+            \- 3H: three topics_about human 
             \- Z: zig-zag
             \- S: all speech tasks (only speech_3T_v2)
             \- LTA: listening think aloud
             \- L3: listening three topics
             \- L: all listening tasks
             \- R: resting
+            \- M: movie recall
+            \- A: Autobigraphical recall
         exception (string list, optional): 예외 subject list. Defaults to [].
         
     Returns: [Project, sub, task] list
     
     """
     if taskname == "TA":
-        Projects = ["speech_3T","speech_3T_v2"]
-        tasks = ["speechFREE", "speechFREE"]
+        Projects = ["speech_3T","speech_3T_v2", "speech_3T_v3"]
+        tasks = ["speechFREE", "speechFREE", "speechFREE"]
     elif taskname == "3":
         Projects = ["speech_3T","speech_3T_v2"]
         tasks = ["speechTOPIC_run-1", "speechTOPIC"]    
+    elif taskname == "3H":
+        Projects = ["speech_3T_v3"]
+        tasks = ["speechTOPIC"]   
     elif taskname == "Z":
-        Projects = ["speech_3T_v2"]
-        tasks = ["speechSTROLL"]    
+        Projects = ["speech_3T_v2", "speech_3T_v3"]
+        tasks = ["speechSTROLL", "speechSTROLL"]    
     elif taskname == "S":
         Projects = ["speech_3T_v2","speech_3T_v2","speech_3T_v2"]
         tasks = ["speechFREE", "speechTOPIC", "speechSTROLL"]       
@@ -45,8 +51,14 @@ def good_subs(taskname, exception=[]):
         Projects = ["speech_3T_v2","speech_3T_v2"]
         tasks = ["listeningFREE", "listeningTOPIC"]
     elif taskname == "R":
-        Projects = ["speech_3T","speech_3T_v2"]
-        tasks = ["REST", "REST"]  
+        Projects = ["speech_3T","speech_3T_v2", "speech_3T_v3"]
+        tasks = ["REST", "REST", "REST"]  
+    elif taskname == "M":
+        Projects = ["KDS_movie", "KDS_movie", "KDS_movie"]
+        tasks = ["recall_run-1", "recall_run-2", "recall_run-3"]
+    elif taskname == "A":
+        Projects = ["speech_3T_v3"]
+        tasks = ["speechRECALL"]
 
     if taskname == "S":
         subs_info = []

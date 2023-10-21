@@ -1,0 +1,58 @@
+{
+    "Name": "Monkey_7T",
+    "bids_path": "/mnt/d/Monkey_kingdom/mri_data",
+    "bids_path_window": "D:/Monkey_kingdom/mri_data",
+    "audio_path": "/mnt/d/Monkey_kingdom/_AUDIO_7T",
+    "audio_path_window": "D:/Monkey_kingdom/_AUDIO_7T",
+    "ses-02": [
+        {
+            "name": "T1",
+            "type": "anat",
+            "modality": "T1w",
+            "resolution": "0.7"
+
+        },
+        {
+            "name": "movieMONKEY",
+            "type": "func",
+            "runs": 5,
+            "modality": "bold",
+            "resolution": "1.5",
+            "tr": "1600"
+        }
+    ],
+    "ses-03": [
+        {
+            "name": "CATEGORY",
+            "type": "func",
+            "runs": 3,
+            "modality": "bold",
+            "resolution": "1.5",
+            "tr": "1600"
+        },
+        {
+            "name": "MT",
+            "type": "func",
+            "runs": 2,
+            "modality": "bold",
+            "resolution": "1.5",
+            "tr": "1600"
+        },
+        {
+            "name": "pRF",
+            "type": "func",
+            "runs": 6,
+            "modality": "bold",
+            "resolution": "1.5",
+            "tr": "1600"
+        },
+        {
+            "name": "REST",
+            "type": "func",
+            "runs": 2,
+            "modality": "bold",
+            "resolution": "1.5",
+            "tr": "1600"
+        }
+    ]
+}
