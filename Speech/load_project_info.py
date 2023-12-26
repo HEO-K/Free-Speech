@@ -16,7 +16,7 @@ def get_full_info(Project):
     
     base = os.path.dirname(__file__)
     base = os.path.join(base, "_data_Project", Project)
-    with open(os.path.join(base, 'project_info.json')) as f:
+    with open(os.path.join(base, 'project_info.json'), encoding="utf-8") as f:
         info = json.load(f)
     
     return info
@@ -63,7 +63,7 @@ def get_good_sub(Project, ses=None, target_run=None):
     
     base = os.path.dirname(__file__)
     base = os.path.join(base, "_data_Project", Project)
-    with open(os.path.join(base, 'good_sub.json')) as f:
+    with open(os.path.join(base, 'good_sub.json'), encoding='utf-8') as f:
         info = json.load(f)
     
     if ses == None:

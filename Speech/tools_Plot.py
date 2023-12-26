@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def timeseries_with_error(data, label: str = False, color: any="C0", fill=True, linewidth=1):
+def timeseries_with_error(data, label: str = False, color: any="C0", fill=True, linewidth=1, alpha=0.1):
     """ Error 범위 timeseries plot
     
     Args
@@ -18,7 +18,7 @@ def timeseries_with_error(data, label: str = False, color: any="C0", fill=True, 
     if fill:
         plt.plot(means, c=color, label=label, linewidth=linewidth)
         plt.fill_between(np.arange(data.shape[0]), means+error, 
-                            means-error, alpha=0.1, color=color)
+                            means-error, alpha=alpha, color=color)
     else:
         plt.errorbar(np.arange(0,data.shape[0]), means, c=color, label=label, yerr=error)
     return
@@ -64,6 +64,19 @@ def mni_surface_plot(data, voxel="3.0", view="lateral", **kwargs):
 
 def save_mni_img(data, view="both", voxel="3.0", filename='now',
                      path='/mnt/c/Users/Kwon/Downloads', **kwargs):
+    """ Save pycortex image
+
+    Args:
+        data (array): 3d brain array, should be MNI
+        view (str, optional): pycortex view ("lateral", "medial"). Defaults to "both".
+        voxel (str, optional): MNI voxel size. Defaults to "3.0".
+        filename (str, optional): Save image name (no extension). Defaults to 'now', current time.
+        path (str, optional): Save path. Defaults to '/mnt/c/Users/Kwon/Downloads'.
+
+    Raises:
+        Exception: Raise error if it is not WSL environment.
+    """
+    
     from Speech.tools import isWSL
     if isWSL():
         import cortex
@@ -144,9 +157,11 @@ def plot_roi(atlas_name, rois, rgba, voxel="3.0", view="lateral", **kwargs):
             - "Brainnetome"
             - "Schaefer2018_<N>Parcels_<7/17>Networks"
             - "Yeo2011_<7/17>Networks"
-        rois (double list): roi 번호 ex) [roi1:[101,102], roi2:[201,202]...]
-        rgba (double list): RGBA 값 (0~255) ex) [roi1:[r,g,b,a], roi2:[r,g,b,a]...]
-        **kwargs: cortex.Volume 변수들
+        rois (double list): roi index ex) [roi1:[101,102], roi2:[201,202]...]
+        rgba (double list): RGBA (0~255) ex) [roi1:[r,g,b,a], roi2:[r,g,b,a]...]
+        voxel (str, optional): voxel size, default is "3.0"
+        view (str, optional): pycortex view, lateral or medial
+        **kwargs: cortex.Volume parameters
         
     Returns:
         pycortex volume data
@@ -178,8 +193,21 @@ def plot_roi(atlas_name, rois, rgba, voxel="3.0", view="lateral", **kwargs):
     viewer = cortex.webgl.show(vol_data)
     viewer.get_view("cvs_avg35_inMNI152", view)   
     
-     
+    
+    
+         
 def plot_mask(masks, rgba, voxel="3.0", **kwargs):
+    """ Overay multiple masks
+    
+    Args:
+        masks (list of 3d array): mask index list, it would be binary volume 
+        rgba (list of colorcode): RGBA (0~255) ex) [roi1:[r,g,b,a], roi2:[r,g,b,a]...]
+        voxel (str, optional): voxel size, default is "3.0"
+        **kwargs: cortex.Volume parameters
+        
+    Returns:
+        pycortex volume data
+    """
     import cortex
     from tqdm import tqdm
     
@@ -233,4 +261,67 @@ def plot_mask(masks, rgba, voxel="3.0", **kwargs):
     
     cortex.webshow(vol_data)   
     
+
+def plot_corrmat_and_boundary(ax, data_matrix, bounds, patchset={}, is_corrmat=False, **kwargs):
+    """ Plot correlaiton matrix & boundary patch
+
+    Args:
+        ax : matplotlib axis
+        data_matrix (array): raw data. correlation is first axis
+        bounds (lists of 1d list): boundaries, [[boundaries1], [boundaries2]] 
+        patchset (dict, optional): mpl.patches params. Defaults to {}.
+        is_corrmat (bool, optional): Is data correlation matrix. Defaults to False.
+    """
+    import matplotlib.patches as patches
+    defaultwidth = 2
+    defaultedgecolor = ["w", "r", "k", "b"]
+    defaultfacecolor = "none"
+    
+    if is_corrmat:
+        ax.imshow(data_matrix, **kwargs)
+    else:
+        ax.imshow(np.corrcoef(data_matrix.T), **kwargs)
+    # plot the boundaries 
+    bounds = list(bounds)
+    
+    if isinstance(bounds[0], list):
+        for i in range(len(bounds)):
+            bounds[i] = list(bounds[i])
+            if 0 not in bounds[i]: bounds[i] = [0] + bounds[i]
+            if data_matrix.shape[1] not in bounds[i]: bounds[i] = bounds[i] + [data_matrix.shape[1]]
+            bounds[i].sort()            
+  
+            try: width = patchset[i]["linewidth"]
+            except: width = defaultwidth
+
+            try: edgecolor = patchset[i]["edgecolor"]
+            except: edgecolor = defaultedgecolor[i%4]
+            
+            try: facecolor = patchset[i]["facecolor"]
+            except: facecolor = defaultfacecolor         
+            
+            for n in range(len(bounds[i])-1):
+                rect = patches.Rectangle(
+                    (bounds[i][n],bounds[i][n]),
+                    bounds[i][n+1]-bounds[i][n],
+                    bounds[i][n+1]-bounds[i][n],
+                    linewidth=width,edgecolor=edgecolor,facecolor=facecolor
+                )
+                ax.add_patch(rect)  
+    
+    else:
+        if 0 not in bounds: bounds = [0] + bounds
+        if data_matrix.shape[1] not in bounds: bounds = bounds + [data_matrix.shape[1]]
+        bounds.sort()
+        
+        for i in range(len(bounds)-1):
+            rect = patches.Rectangle(
+                (bounds[i],bounds[i]),
+                bounds[i+1]-bounds[i],
+                bounds[i+1]-bounds[i],
+                linewidth=defaultwidth,edgecolor=defaultedgecolor[0],facecolor=defaultfacecolor
+            )
+            ax.add_patch(rect)     
+    
+
 # %%

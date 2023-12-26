@@ -14,7 +14,18 @@ def isWSL():
     else: return False
     
 # make epi path
-def get_epipath(Project, sub, taskname, ses=None):
+def get_epipath(Project, sub, taskname, ses=None, smooth=True):
+    """ EPI path 불러오기
+
+    Args:
+        Project (str): Project 이름.
+        sub (str): sub 번호.
+        taskname (str): task 이름, run이 있을 경우 포함되어야.
+        ses (str, optional): ses 번호. Defaults to None.
+        smooth (bool, optional): Smoothing 유무. Defaults to True.
+    Returns: 
+        Path string
+    """
     info = load_project_info.get_full_info(Project)
     if isWSL()==True: 
         base = info["bids_path"]
@@ -23,11 +34,17 @@ def get_epipath(Project, sub, taskname, ses=None):
     
     
     if ses == None:
-        epi_name = "sub-"+sub+"_task-"+taskname+"_sc_dt_hp_sm.nii.gz"
+        if smooth: 
+            epi_name = "sub-"+sub+"_task-"+taskname+"_sc_dt_hp_sm.nii.gz"
+        else: 
+            epi_name = "sub-"+sub+"_task-"+taskname+"_sc_dt_hp.nii.gz"
         filepath = os.path.join(base, "derivatives", "sub-"+sub, "func", epi_name)
     else:
         ses = str(ses)
-        epi_name = "sub-"+sub+"_ses-"+ses+"_task-"+taskname+"_sc_dt_hp_sm.nii.gz"
+        if smooth:
+            epi_name = "sub-"+sub+"_ses-"+ses+"_task-"+taskname+"_sc_dt_hp_sm.nii.gz"
+        else:
+            epi_name = "sub-"+sub+"_ses-"+ses+"_task-"+taskname+"_sc_dt_hp.nii.gz"
         filepath = os.path.join(base, "derivatives", "sub-"+sub, "ses-"+ses, "func", epi_name)
     
     return(filepath)
@@ -36,7 +53,8 @@ def get_epipath(Project, sub, taskname, ses=None):
 
 #############################################################################################
 # load epi
-def loader(Project, sub, taskname, ses=None, confound_interp='linear', zscoring=True, dtype="float16"):
+def loader(Project, sub, taskname, ses=None, confound_interp='linear', 
+           zscoring=True, smooth=True, dtype="float16"):
     """ EPI를 불러오기
 
     Args:
@@ -53,7 +71,7 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear', zscoring=
     import pandas as pd
     from scipy.stats import zscore
 
-    filepath = get_epipath(Project, sub, taskname, ses)
+    filepath = get_epipath(Project, sub, taskname, ses, smooth)
     if confound_interp == False:
         npypath = filepath[:-7]+"_raw.npy"
     else:
@@ -213,7 +231,7 @@ def parcel_averaging(parcel, epi, size='3.0'):
     """
     # load parcel
     if type(parcel) == str:
-        [info, data] = get_atlas(parcel, size)
+        [info, data] = get_atlas(parcel, size=size)
         numbers = np.array(info[:,0], int)
     else:
         if len(parcel) == 2:
@@ -223,6 +241,7 @@ def parcel_averaging(parcel, epi, size='3.0'):
         else:
             data = np.nan_to_num(parcel)
             numbers = list(set(list(data.reshape(-1)))-{0})
+    data = np.array(data, int)
     # load epi
     epi = np.array(epi)
     epi = epi.reshape(list(data.shape)+[epi.shape[-1]])
@@ -267,6 +286,10 @@ def get_parcel_roi_mask(parcel, roi, size="3.0"):
     try:
         for i in roi: mask = np.logical_or(mask, data==i)
     except: mask = data==roi
+    if np.sum(mask) == 0:
+        import warnings
+        warnings.warn("ROI is empty. Is roi index is correct?", UserWarning)
+    
     return mask.astype(bool)      
         
         
