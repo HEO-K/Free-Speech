@@ -29,7 +29,7 @@ def hrf_convolution(y, TR, sample=1):
 
     Args:
         y (1d array): input data
-        TR (number): TR (second)
+        TR (float): TR (second)
         sample (int, optional): TR당 샘플 개수. Defaults to 1.
         
     Returns:

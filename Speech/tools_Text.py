@@ -21,6 +21,7 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
         tr (float, optional): TR (초)
         limiting (bool, optional): 주제와 중복되지 않는 silence, sentence. Defaults to True.
         threshold (float, optional): silence 기준(초). Defaults to 3.5TR.
+        
 
         
     Returns:
@@ -166,7 +167,11 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
 
         
     return ev
-    
+
+
+
+        
+
 
 def load_sentence(Project, sub, runname, ses=None):
     """ 텍스트 읽어오기
@@ -367,3 +372,144 @@ def load_episode_score(Project, sub, runname, ses=None):
         except: 
             pass
     return np.array(score, int)
+
+
+
+def load_NSP(Project, sub, runname, ses=None, raw=False, save=True):
+    """ Load or Save NSP score
+
+    Args:
+        Project (str): 프로젝트명
+        sub (str): sub number
+        runname (str): task이름, ex) speechTOPIC_run-1
+        ses (str or int, optional): session number, Defaults to None.
+        raw (bool, optional): get raw NSP. Default to False
+        save (bool, optional): Save file? Defaults to True.
+    """
+
+    from . import load_project_info
+    audio_path = load_project_info.get_audio_path(Project,derivatives=True)
+    audio_path = os.path.join(audio_path, "sub-"+sub)
+    
+    if raw: misc = "_raw"
+    else: misc = ""
+    if ses != None:
+        audio_path = os.path.join(audio_path, "ses-"+str(ses))
+    
+    if ses == None: filename = f"sub-{sub}_task-{runname}_NSP{misc}.txt"
+    else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_NSP{misc}.txt"
+    
+    try:
+        with open(os.path.join(audio_path, filename), "r", encoding="utf-8") as f:
+            nextprop = f.readlines()
+            NSP = np.array(nextprop, float)
+    except:
+        from .tools_NLP import get_NSP
+        text = np.array(get_sentence_FA(Project, sub, runname))[:,-1]
+        NSP = get_NSP(text, raw=raw)
+        if save:
+            from . import load_project_info
+            audio_path = load_project_info.get_audio_path(Project,derivatives=True)
+            audio_path = os.path.join(audio_path, "sub-"+sub)
+            if ses != None:
+                audio_path = os.path.join(audio_path, "ses-"+str(ses))
+            
+            if ses == None: filename = f"sub-{sub}_task-{runname}_NSP{misc}.txt"
+            else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_NSP{misc}.txt"
+            
+            with open(os.path.join(audio_path, filename), "w", encoding="utf-8") as f:
+                for score in NSP:
+                    f.write(str(score) + "\n")
+    return(NSP)
+
+
+
+
+
+def load_NSP_boundary(Project, sub, runname, ses=None, bin=[0,20], tr=1000):
+    """ Load boundary TR based on next sentence prediction score
+
+    Args:
+        Project (str): 프로젝트명
+        sub (str): sub number
+        runname (str): task이름, ex) speechTOPIC_run-1
+        ses (str or int, optional): session number, Defaults to None.
+        bin (list, optional): Bin(0 to 100). Defaults to [0,20].
+        tr (int, optional): TR (ms). Defaults to 1000.
+
+    Returns:
+        TR boundary array (int)
+    """
+    from . import load_project_info
+    audio_path = load_project_info.get_audio_path(Project,derivatives=True)
+    audio_path = os.path.join(audio_path, "sub-"+sub)
+    if ses != None:
+        audio_path = os.path.join(audio_path, "ses-"+str(ses))
+    
+    if ses == None: filename = f"sub-{sub}_task-{runname}_NSP.txt"
+    else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_NSP.txt"
+    
+    try:
+        with open(os.path.join(audio_path, filename), "r", encoding="utf-8") as f:
+            nextprop = f.readlines()
+            nextprop = np.array(nextprop, float)
+    except:
+        nextprop = load_NSP(Project, sub, runname, ses=ses)
+        
+
+            
+    sentence = np.array(get_sentence_FA(Project, sub, runname))[:-1,1].astype(int)
+
+
+    bound = sentence[(nextprop>np.percentile(nextprop, bin[0]))&
+                    (nextprop<=np.percentile(nextprop, bin[1]))] 
+    
+    return np.array(bound/tr, int)
+
+
+def load_PL(Project, sub, runname, ses=None, tr=1000):
+    """ Load pause length
+
+    Args:
+        Project (str): 프로젝트명
+        sub (str): sub number
+        runname (str): task이름, ex) speechTOPIC_run-1
+        ses (str or int, optional): session number, Defaults to None.
+        tr (int, optional): TR (ms). Defaults to 1000.
+
+    Returns:
+        PL list
+    """    
+    from .tools import isWSL
+
+    fa = np.array(get_sentence_FA(Project, sub, runname))[:,:-1].astype(int)
+    pause = [fa[i,0]-fa[i-1,1] for i in range(1,fa.shape[0])]
+    np.array(pause, int)/tr
+    return pause
+        
+
+
+def load_PL_boundary(Project, sub, runname, ses=None, bin=[80,100], tr=1000):
+    """ Load boundary TR based on pause length
+
+    Args:
+        Project (str): 프로젝트명
+        sub (str): sub number
+        runname (str): task이름, ex) speechTOPIC_run-1
+        ses (str or int, optional): session number, Defaults to None.
+        bin (list, optional): Bin(0 to 100). Defaults to [80,100].
+        tr (int, optional): TR (ms). Defaults to 1000.
+
+    Returns:
+        TR boundary array (int)
+    """
+    from .tools import isWSL
+
+    fa = np.array(get_sentence_FA(Project, sub, runname))[:,:-1].astype(int)
+    sentence = fa[:-1,1]
+    pause = [fa[i,0]-fa[i-1,1] for i in range(1,fa.shape[0])]
+
+    bound = sentence[(pause>np.percentile(pause, bin[0]))&
+                    (pause<=np.percentile(pause, bin[1]))] 
+    
+    return np.array(bound/tr, int)

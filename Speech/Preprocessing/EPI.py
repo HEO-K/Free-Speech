@@ -8,12 +8,7 @@ import subprocess as sp
 from Speech.load_project_info import get_full_info
 import zipfile
 import re
-
-###################### 스크립트서 자주 쓰일 함수 ########################
-# 리눅스인지 확인 
-def isWSL():
-    if os.getcwd()[0] == "/": return True
-    else: return False
+from Speech.tools import isWSL
 
 
 
@@ -362,7 +357,10 @@ def run_dcm2bids(Project, sub, input_path, ses=None):
 # load (prep) confound
 def load_confounds(Project, sub, runname, ses=None):
     info = get_full_info(Project)
-    bids_path = info['bids_path']
+    if isWSL():
+        bids_path = info['bids_path']
+    else:
+        bids_path = info['bids_path_window']
     sub = "sub-"+sub
     task = "_task-"+runname
     sub_path = os.path.join(bids_path, "derivatives", sub)

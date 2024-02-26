@@ -234,7 +234,7 @@ def parcel_averaging(parcel, epi, size='3.0'):
         [info, data] = get_atlas(parcel, size=size)
         numbers = np.array(info[:,0], int)
     else:
-        if len(parcel) == 2:
+        if type(parcel) == list:
             data = parcel[1]
             info = parcel[0]
             numbers = np.array(info[:,0], int)
@@ -368,6 +368,69 @@ def get_network_info(parcel):
         results.append([num, name])
     results = np.array(results)
     return(results)
+
+
+
+def fill_parcel_value(parcel, value, roi="all", size='3.0'):
+    """ Atlas에 특정 값 채우기, 외 영역은 NaN
+
+    Args:
+        parcel: network name / [info, data]
+            \- "Yeo2011_<7/17>Networks"
+            \- "Schaefer2018_<N>Parcels_<7/17>Networks"
+            \- [info, data]: results of get_atlas
+        value: 채울 값
+        roi: 타깃 roi. Defaults to 'all' (모든 parcel).
+        size: atlas voxel size. Defaults to '3.0'
+
+    Returns:
+        _type_: _description_
+    """
+    
+    
+    # load parcel
+    if type(parcel) == str:
+        [info, data] = get_atlas(parcel, size)
+        numbers = np.array(info[:,0], int)
+    else:
+        if len(parcel) == 2:
+            data = parcel[1]
+            info = parcel[0]
+            numbers = np.array(info[:,0], int)
+        else:
+            data = np.nan_to_num(parcel)
+            numbers = list(set(list(data.reshape(-1)))-{0})   
+             
+    brain = np.zeros_like(data)
+    brain[:] = np.nan
+    
+    if roi == 'all':
+        if len(value) == len(numbers):
+            for i in range(len(value)):
+                brain[data==i+1] = value[i]                
+        else:
+            num_value = len(value)
+            num_parcels = len(numbers)
+            raise Exception(f"Number of values({num_value}) is not matched with number of parcels({num_parcels})")
+    else:
+        if type(roi) == int:
+            try:
+                brain[data==roi] = value
+            except:
+                raise Exception(f"Roi-'{roi}' is not in atlas")
+            
+        else:
+            if len(value) == len(roi):
+                for i,n in enumerate(roi):
+                    brain[data==n] = value[i]
+            else:
+                num_value = len(value)
+                num_parcels = len(roi)
+                raise Exception(f"Number of values({num_value}) is not matched with number of rois({num_parcels})")
+    
+    return brain    
+    
+
 
 
 def data_to_MNI_nifti(input, voxel_size='3.0'):

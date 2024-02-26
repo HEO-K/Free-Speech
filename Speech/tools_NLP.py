@@ -276,3 +276,61 @@ def keyword_extraction(model, input_lines:list, filtered_lines:list,
         
         
     return results
+
+
+def get_NSP(text, model_name='klue/bert-base', raw=False):
+    """ Get next sentence prediction score
+
+    Args:
+        text (1d list of strings): list of sentences
+        model_name (str, optional): name of the model. Default to 'klue/bert-base'
+        raw (bool, optional): get raw NSP. Default to False
+    """
+    
+    import tensorflow as tf
+    from transformers import TFBertForNextSentencePrediction
+    from transformers import AutoTokenizer
+    
+    model = TFBertForNextSentencePrediction.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    
+    
+    next_sentence_probs = []
+    for i in range(len(text)-1):
+        encoding = tokenizer(text[i], text[i+1], return_tensors='tf')
+        logits = model(encoding['input_ids'], token_type_ids=encoding['token_type_ids'])[0]
+        softmax = tf.keras.layers.Softmax()
+        probs = softmax(logits)
+        if raw:
+            next_sentence_probs.append(logits.numpy()[0,0])
+        else:
+            next_sentence_probs.append(np.squeeze(probs.numpy())[0])
+        
+    return(np.array([float(n) for n in next_sentence_probs]))
+
+
+def get_NSP_embedding(text, model_name='klue/bert-base', layer=-1):
+    """ Get next sentence prediction score
+
+    Args:
+        text (1d list of strings): list of sentences
+        model_name (str, optional): name of the model. Default to 'klue/bert-base'
+    """
+    
+    import tensorflow as tf
+    from transformers import TFBertForNextSentencePrediction
+    from transformers import AutoTokenizer
+    
+    model = TFBertForNextSentencePrediction.from_pretrained(model_name, output_hidden_states=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    
+    
+    embeds = []
+    for i in range(len(text)-1):
+        encoding = tokenizer(text[i], text[i+1], return_tensors='tf')
+        logits = model(encoding['input_ids'], token_type_ids=encoding['token_type_ids'])[1][layer]
+        
+        embedding = logits.numpy()[0,0,:]
+        embeds.append(embedding)
+
+    return(np.array(embeds))
