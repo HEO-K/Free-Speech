@@ -50,8 +50,9 @@ def eventseg_HMM(data, N, add_edge=True, scoring="diff"):
         N: number of events
         add_edge: include edge(0,end) at boundaries
         scoring (str): scoring method, default is diff
-            - diff: within - across
+            - diff: (within - across)/N
             - ratio: (within+1) / (across+1)
+            - original: (t==t+5) - (t!=t+5), from Baldassano et al. (2017)
         
     Returns:
         [boundaries, score]
@@ -79,10 +80,62 @@ def eventseg_HMM(data, N, add_edge=True, scoring="diff"):
     
     if scoring == "diff":
         score = np.mean(corrmat[within_mask==1])-np.mean(corrmat[across_mask==1])
+        score = score/N
     elif scoring == "ratio":
         score = (np.mean(corrmat[within_mask==1])+1)/(np.mean(corrmat[across_mask==1])+1)
+    elif scoring == "original":
+        events = np.argmax(hmm_sim.segments_[0], axis=1)
+        corrs = np.diag(corrmat, 5)
+        within = corrs[events[:-5] == events[5:]].mean()
+        across = corrs[events[:-5] != events[5:]].mean()
+        score = within-across
+        
+        
     else:
-        raise NameError('Unknown scoring method ("diff", "ratio")')
+        raise NameError('Unknown scoring method ("diff", "ratio", "original")')
     
     if add_edge: return([bounds_all,score])
     else: return([bounds,score])
+    
+    
+    
+def glm(input, X, apply_hrf=True, tr=1000):
+    """ General linear model 
+
+    Args:
+        input (array): Input [voxel, times]
+        X (array): Design matrix [condition, times]
+        apply_hrf (bool, optional): Apply hrf at X. Defaults to True.
+        tr (int, optional): tr (ms). Defaults to 1000.
+
+    Returns:
+        Array: [condition, voxel]
+    """
+    
+    input = np.array(input).astype("float32")
+    try:
+        _, times = input.shape
+    except:
+        times = len(input)
+        input = input.reshape(1, times)
+    
+    X = np.array(X)
+    try:
+        n, times = X.shape
+    except:
+        times = len(X)
+        X = X.reshape(1,times)
+        n = 1
+    
+    if apply_hrf:
+        X_hrf = []
+        for i in range(n):
+            X_hrf.append(hrf_convolution(X[i,:],tr/1000))
+        X_hrf = np.array(X_hrf).astype("float32").T
+    else:
+        X_hrf = np.array(X).astype("float32").T
+        
+    
+    betas = np.dot(np.dot(np.linalg.pinv(np.dot(X_hrf.T, X_hrf)), X_hrf.T), input.T)
+    return betas
+    

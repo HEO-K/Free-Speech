@@ -375,7 +375,7 @@ def load_episode_score(Project, sub, runname, ses=None):
 
 
 
-def load_NSP(Project, sub, runname, ses=None, raw=False, save=True):
+def load_NSP(Project, sub, runname, ses=None, raw=True, save=True):
     """ Load or Save NSP score
 
     Args:
@@ -383,7 +383,7 @@ def load_NSP(Project, sub, runname, ses=None, raw=False, save=True):
         sub (str): sub number
         runname (str): task이름, ex) speechTOPIC_run-1
         ses (str or int, optional): session number, Defaults to None.
-        raw (bool, optional): get raw NSP. Default to False
+        raw (bool, optional): get raw NSP. Default to True.
         save (bool, optional): Save file? Defaults to True.
     """
 
@@ -426,7 +426,7 @@ def load_NSP(Project, sub, runname, ses=None, raw=False, save=True):
 
 
 
-def load_NSP_boundary(Project, sub, runname, ses=None, bin=[0,20], tr=1000):
+def load_NSP_boundary(Project, sub, runname, ses=None, raw=True, bin=[-10,2], tr=1000, boundary="end"):
     """ Load boundary TR based on next sentence prediction score
 
     Args:
@@ -434,35 +434,30 @@ def load_NSP_boundary(Project, sub, runname, ses=None, bin=[0,20], tr=1000):
         sub (str): sub number
         runname (str): task이름, ex) speechTOPIC_run-1
         ses (str or int, optional): session number, Defaults to None.
-        bin (list, optional): Bin(0 to 100). Defaults to [0,20].
+        raw (bool, optional): Use raw NSP, Defaults to False
+        bin (list, optional): Bin(0% to 100% if raw=True / raw value if raw=False). Defaults to [-10,2].
         tr (int, optional): TR (ms). Defaults to 1000.
-
+        boundary (str, optional): sentence 'start' or 'end', Defaults to end
     Returns:
         TR boundary array (int)
     """
-    from . import load_project_info
-    audio_path = load_project_info.get_audio_path(Project,derivatives=True)
-    audio_path = os.path.join(audio_path, "sub-"+sub)
-    if ses != None:
-        audio_path = os.path.join(audio_path, "ses-"+str(ses))
+    nextprop = load_NSP(Project, sub, runname, raw=raw)
     
-    if ses == None: filename = f"sub-{sub}_task-{runname}_NSP.txt"
-    else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_NSP.txt"
-    
-    try:
-        with open(os.path.join(audio_path, filename), "r", encoding="utf-8") as f:
-            nextprop = f.readlines()
-            nextprop = np.array(nextprop, float)
-    except:
-        nextprop = load_NSP(Project, sub, runname, ses=ses)
-        
+                
+    sentence = np.array(get_sentence_FA(Project, sub, runname))[:,:-1].astype(int)
 
-            
-    sentence = np.array(get_sentence_FA(Project, sub, runname))[:-1,1].astype(int)
+    if boundary == 'start':
+        sentence = sentence[1:,0]
+    elif boundary == "end":
+        sentence = sentence[:-1,1]
+    else:
+        raise Exception("Boundary option shoud be 'start' or 'end'")
 
-
-    bound = sentence[(nextprop>np.percentile(nextprop, bin[0]))&
-                    (nextprop<=np.percentile(nextprop, bin[1]))] 
+    if raw:
+        bound = sentence[(nextprop>bin[0])&(nextprop<bin[1])]
+    else:
+        bound = sentence[(nextprop>np.percentile(nextprop, bin[0]))&
+                        (nextprop<=np.percentile(nextprop, bin[1]))] 
     
     return np.array(bound/tr, int)
 
@@ -513,3 +508,4 @@ def load_PL_boundary(Project, sub, runname, ses=None, bin=[80,100], tr=1000):
                     (pause<=np.percentile(pause, bin[1]))] 
     
     return np.array(bound/tr, int)
+

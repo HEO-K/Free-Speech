@@ -285,8 +285,12 @@ def get_NSP(text, model_name='klue/bert-base', raw=False):
         text (1d list of strings): list of sentences
         model_name (str, optional): name of the model. Default to 'klue/bert-base'
         raw (bool, optional): get raw NSP. Default to False
+
+    Returns:
+        array (n): NSP score
     """
     
+        
     import tensorflow as tf
     from transformers import TFBertForNextSentencePrediction
     from transformers import AutoTokenizer
@@ -309,17 +313,22 @@ def get_NSP(text, model_name='klue/bert-base', raw=False):
     return(np.array([float(n) for n in next_sentence_probs]))
 
 
-def get_NSP_embedding(text, model_name='klue/bert-base', layer=-1):
-    """ Get next sentence prediction score
+def get_NSP_embedding(text, model_name='klue/bert-base', layer=13):
+    """ Get next sentence prediction embedding (hidden state of [CLS] token)
 
     Args:
         text (1d list of strings): list of sentences
         model_name (str, optional): name of the model. Default to 'klue/bert-base'
+
+    Returns:
+        array (n, dim): NSP embedding
     """
-    
+                
     import tensorflow as tf
     from transformers import TFBertForNextSentencePrediction
     from transformers import AutoTokenizer
+    
+    
     
     model = TFBertForNextSentencePrediction.from_pretrained(model_name, output_hidden_states=True)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -328,9 +337,28 @@ def get_NSP_embedding(text, model_name='klue/bert-base', layer=-1):
     embeds = []
     for i in range(len(text)-1):
         encoding = tokenizer(text[i], text[i+1], return_tensors='tf')
-        logits = model(encoding['input_ids'], token_type_ids=encoding['token_type_ids'])[1][layer]
+        logits = model(encoding['input_ids'], token_type_ids=encoding['token_type_ids'])[1][layer-1]
         
         embedding = logits.numpy()[0,0,:]
         embeds.append(embedding)
 
     return(np.array(embeds))
+
+
+
+def get_sentence_embedding(text, model_name='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'):
+    """ Get sentence embedding by sentence transformer
+
+    Args:
+        text (str list): list of sentences
+        model_name (str, optional): name of the model. Defaults to 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'.
+
+    Returns:
+        array (n, dim): sentence embedding
+    """
+    
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer(model_name)
+    embeddings = model.encode(text)
+    
+    return embeddings

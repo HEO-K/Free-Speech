@@ -146,7 +146,7 @@ def get_atlas(name:str, size='3.0', mni_coordinates=False):
             \- "Schaefer2018_<N>Parcels_<7/17>Networks"
             \- "Yeo2011_<7/17>Networks"
         size (int, optional): 복셀 크기(mm). Defaults to 3mm.
-        coordinates (bool, optional): parcel의 MNI 좌표. Defaults to False.
+        mni_coordinates (bool, optional): parcel의 MNI 좌표. Defaults to False.
 
     Returns: 
         [info, data]
@@ -381,6 +381,9 @@ def fill_parcel_value(parcel, value, roi="all", size='3.0'):
             \- [info, data]: results of get_atlas
         value: 채울 값
         roi: 타깃 roi. Defaults to 'all' (모든 parcel).
+            \- int
+            \- index array (1부터 시작)
+            \- bool array
         size: atlas voxel size. Defaults to '3.0'
 
     Returns:
@@ -418,7 +421,18 @@ def fill_parcel_value(parcel, value, roi="all", size='3.0'):
                 brain[data==roi] = value
             except:
                 raise Exception(f"Roi-'{roi}' is not in atlas")
-            
+        
+        if (roi[0]==True) or (roi[0]==False):
+            try:
+                n = 0
+                for i in range(len(roi)):
+                    if roi[i]: 
+                        brain[data==i+1] = value[n]
+                        n = n+1
+            except:
+                num_value = len(value)
+                num_parcels = np.sum(roi)
+                raise Exception(f"Number of values({num_value}) is not matched with number of rois({num_parcels})")                
         else:
             if len(value) == len(roi):
                 for i,n in enumerate(roi):
