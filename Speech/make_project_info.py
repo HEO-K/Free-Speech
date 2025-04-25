@@ -12,16 +12,16 @@ if  isWSL(): base_path = "/mnt/d/Functions/Speech/_data_Project"
 else: base_path = "D:/Functions/Speech/_data_Project"
 
 # 프로젝트 이름 
-Project_name = "Monkey_7T"
+Project_name = "Paranoia"
 os.makedirs(os.path.join(base_path,Project_name), exist_ok=True)
 # bids path
-bids_path = "/mnt/d/Monkey_kingdom/_DATA_7T"
+bids_path = "/mnt/f/Paranoia/_DATA_fMRI"
 # for WSL environment, ubuntu면 빈 문자열으로
-bids_path_window = "D:/Monkey_kingdom/_DATA_7T" 
+bids_path_window = "F:/Paranoia/_DATA_fMRI" 
 
 # audio path
-audio_path = "/mnt/d/Monkey_kingdom/_AUDIO_7T"
-audio_path_window = "D:/Monkey_kingdom/_AUDIO_7T"
+audio_path = "/mnt/f/Moth/_DATA_Audio"
+audio_path_window = "F:/Moth/_DATA_Audio"
 
 
 ####################################################################################
@@ -41,7 +41,7 @@ for key in ses_info:
         name = name.strip()
         if len(name) > 0:
             runinfo = {"name": name}
-            types = input(f"{name}의 종류를 입력하세요 (anant, fmap, func).")
+            types = input(f"{name}의 종류를 입력하세요 (anat, fmap, func).")
             runinfo["type"] = types
             if types.strip() == "func":
                 runs = input(f"{name}의 개수를 입력하세요. 1개 이상일 경우 run라벨이 붙습니다.")

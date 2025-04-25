@@ -53,7 +53,7 @@ def get_epipath(Project, sub, taskname, ses=None, smooth=True):
 
 #############################################################################################
 # load epi
-def loader(Project, sub, taskname, ses=None, confound_interp='linear', 
+def loader(Project, sub, taskname, ses=None, confound_interp='linear', save=False,
            zscoring=True, smooth=True, dtype="float16"):
     """ EPI를 불러오기
 
@@ -77,12 +77,9 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear',
     else:
         npypath = filepath[:-7]+"_"+confound_interp+".npy"
     
-    try:   # npy존재
-        epi = np.load(npypath)
-        
-
-    except:
-        epi = np.array(nib.load(filepath).get_fdata()).astype(dtype)
+    
+    if save:
+        epi = np.array(nib.load(filepath).get_fdata())
         
         # shape info
         fov = list(epi.shape[:-1])
@@ -103,8 +100,39 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear',
                 epi=epi.interpolate()
             epi = np.array(epi).T.reshape((-1,tr))
 
+        epi = epi.astype(dtype)
         np.save(npypath, epi.reshape(fov+[tr]))
         epi = epi.reshape(fov+[tr])
+    else:
+        try:   # npy존재
+            epi = np.load(npypath)
+            
+
+        except:
+            epi = np.array(nib.load(filepath).get_fdata())
+            
+            # shape info
+            fov = list(epi.shape[:-1])
+            tr = epi.shape[-1]
+            epi = epi.reshape(-1,tr)
+            # zscore
+            if zscoring:
+                epi = zscore(epi, axis=1)
+            
+            # interp
+            if not confound_interp == False:
+                confound = np.loadtxt(filepath.split('_sc')[0]+"_desc-FDoutlier.txt", int)
+                for i in range(len(confound)):
+                    if confound[i] == 1: epi[:,i] = np.nan
+                epi = pd.DataFrame(epi.T)
+                # method
+                if confound_interp == 'linear': 
+                    epi=epi.interpolate()
+                epi = np.array(epi).T.reshape((-1,tr))
+
+            epi = epi.astype(dtype)
+            np.save(npypath, epi.reshape(fov+[tr]))
+            epi = epi.reshape(fov+[tr])
 
 
     # return

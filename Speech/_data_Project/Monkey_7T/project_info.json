@@ -1,9 +1,9 @@
 {
     "Name": "Monkey_7T",
-    "bids_path": "/mnt/d/Monkey_kingdom/mri_data",
-    "bids_path_window": "D:/Monkey_kingdom/mri_data",
-    "audio_path": "/mnt/d/Monkey_kingdom/_AUDIO_7T",
-    "audio_path_window": "D:/Monkey_kingdom/_AUDIO_7T",
+    "bids_path": "/mnt/e/MonkeyKingdom_Human_7T",
+    "bids_path_window": "E:/MonkeyKingdom_Human_7T",
+    "audio_path": "/mnt/d/MonkeyKingdom_Human_7T",
+    "audio_path_window": "E:/MonkeyKingdom_Human_7T",
     "ses-02": [
         {
             "name": "T1",

@@ -1,9 +1,9 @@
 {
     "Name": "MRIting",
-    "bids_path": "/mnt/d/MRIting/_DATA_fMRI",
-    "bids_path_window": "D:/MRIting/_DATA_fMRI",
-    "audio_path": "/mnt/d/MRIting/_DATA_Behavior",
-    "audio_path_window": "D:/MRIting/_DATA_Behavior",
+    "bids_path": "/mnt/e/MRIting/_DATA_fMRI",
+    "bids_path_window": "E:/MRIting/_DATA_fMRI",
+    "audio_path": "/mnt/e/MRIting/_DATA_Behavior",
+    "audio_path_window": "E:/MRIting/_DATA_Behavior",
     "ses-01": [
         {
             "name": "acq-GRE",

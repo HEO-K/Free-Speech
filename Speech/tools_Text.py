@@ -2,7 +2,7 @@ import os
 import numpy as np
 import glob
 
-def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limiting=True, threshold=3.5):
+def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1000, limiting=True, threshold=3.5):
     """ Audio boundary 읽어오기
 
     Args:
@@ -18,7 +18,7 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
             - long_pause: 길게 쉰 문장 종료
             - center: ev1 중심
         ses (str or int, optional): session number, Defaults to None.
-        tr (float, optional): TR (초)
+        tr (float, optional): TR (ms)
         limiting (bool, optional): 주제와 중복되지 않는 silence, sentence. Defaults to True.
         threshold (float, optional): silence 기준(초). Defaults to 3.5TR.
         
@@ -87,15 +87,11 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
             sen_sil_diff = np.absolute(sen_sil[:,0]-ev1_sil_mean)
             from scipy.stats import rankdata
             sen_sim = sen_sil[rankdata(sen_sil_diff)<len(ev1_end)+1,1]
-
-            tr = tr*1000
             ev = np.array(sen_sim/tr, int)
         else:
-            tr = tr*1000
             ev = np.array(sen_end/tr, int)
     elif boundary == 'long_pause':
         ev = []
-        tr = tr*1000
         FA = np.array(load_FA(Project, sub, runname, ses))[:,:2].astype(int)
         with open(filepath, 'r') as f:
             sen = f.readlines() 
@@ -112,8 +108,6 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1.0, limit
         ev = np.array(np.array(ev)/tr, int)        
                  
     else:
-        tr = tr*1000
-        
         # file load
         with open(filepath, 'r') as f:
             ev = f.readlines()
@@ -226,7 +220,7 @@ def load_FA(Project, sub, runname, ses=None, TR=None):
     if ses != None:
         audio_path = os.path.join(audio_path, "ses-"+str(ses))
     
-    filename = f"*task-{runname}_FA_new.txt"
+    filename = f"*task-{runname}*_FA_new.txt"
     
     
     FA = []
@@ -239,7 +233,6 @@ def load_FA(Project, sub, runname, ses=None, TR=None):
         times = [int(time_and_word[0]), int(time_and_word[1])]
         FA.append(times)
         words.append(time_and_word[2])
-        
     
     if TR == None:
         for i, word in enumerate(FA):
@@ -312,7 +305,7 @@ def get_phrase_FA(Project, sub, runname, ses=None):
     return(phrase_FA)
 
 
-def get_sentence_FA(Project, sub, runname, ses=None):
+def get_sentence_FA(Project, sub, runname, ses=None, only_timestamp=False, tr=1000):
     """ 문장 단위의 FA 
 
     Args:
@@ -339,6 +332,10 @@ def get_sentence_FA(Project, sub, runname, ses=None):
     if sen_FA[-1][1] != FA[-1][1]:
         sen_FA.append([FA[s][0], FA[-1][1], " ".join(words[s:])])
     
+    if only_timestamp:
+        sen_FA = np.array(sen_FA)
+        sen_FA = sen_FA[:,:-1].astype(int)
+        sen_FA = (sen_FA/tr).astype(int)
     return(sen_FA)
 
 
@@ -375,7 +372,8 @@ def load_episode_score(Project, sub, runname, ses=None):
 
 
 
-def load_NSP(Project, sub, runname, ses=None, raw=True, save=True):
+def load_NSP(Project, sub, runname, ses=None, raw=True, save=False, 
+             reverse=False, time=None, time_criteria="end"):
     """ Load or Save NSP score
 
     Args:
@@ -385,44 +383,59 @@ def load_NSP(Project, sub, runname, ses=None, raw=True, save=True):
         ses (str or int, optional): session number, Defaults to None.
         raw (bool, optional): get raw NSP. Default to True.
         save (bool, optional): Save file? Defaults to True.
+        reverse (bool, optional): Transition value?
+        time (int, optional): Load NSP with time. None or TR(ms)
+        time_criteria (str, optional): Time criteria. end or start
     """
 
     from . import load_project_info
-    audio_path = load_project_info.get_audio_path(Project,derivatives=True)
+    audio_path = load_project_info.get_audio_path(Project, derivatives=True)
     audio_path = os.path.join(audio_path, "sub-"+sub)
+    if ses != None:
+        audio_path = os.path.join(audio_path, "ses-"+str(ses))
     
     if raw: misc = "_raw"
     else: misc = ""
-    if ses != None:
-        audio_path = os.path.join(audio_path, "ses-"+str(ses))
     
     if ses == None: filename = f"sub-{sub}_task-{runname}_NSP{misc}.txt"
     else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_NSP{misc}.txt"
     
-    try:
-        with open(os.path.join(audio_path, filename), "r", encoding="utf-8") as f:
-            nextprop = f.readlines()
-            NSP = np.array(nextprop, float)
-    except:
+    
+    if save:
         from .tools_NLP import get_NSP
-        text = np.array(get_sentence_FA(Project, sub, runname))[:,-1]
-        NSP = get_NSP(text, raw=raw)
-        if save:
-            from . import load_project_info
-            audio_path = load_project_info.get_audio_path(Project,derivatives=True)
-            audio_path = os.path.join(audio_path, "sub-"+sub)
-            if ses != None:
-                audio_path = os.path.join(audio_path, "ses-"+str(ses))
-            
+        text = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,-1]
+        NSP = get_NSP(text, raw=raw)   
+        if ses == None: filename = f"sub-{sub}_task-{runname}_NSP{misc}.txt"
+        else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_NSP{misc}.txt"
+        with open(os.path.join(audio_path, filename), "w", encoding="utf-8") as f:
+            for score in NSP:
+                f.write(str(score) + "\n")
+    else:
+        try:
+            with open(os.path.join(audio_path, filename), "r", encoding="utf-8") as f:
+                nextprop = f.readlines()
+                NSP = np.array(nextprop, float)
+        except:
+            from .tools_NLP import get_NSP
+            text = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,-1]
+            NSP = get_NSP(text, raw=raw)   
             if ses == None: filename = f"sub-{sub}_task-{runname}_NSP{misc}.txt"
             else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_NSP{misc}.txt"
-            
             with open(os.path.join(audio_path, filename), "w", encoding="utf-8") as f:
                 for score in NSP:
                     f.write(str(score) + "\n")
-    return(NSP)
 
+    if reverse: NSP = -np.array(NSP)
 
+    if time==None: return(NSP)
+    else:
+        time = int(time)
+        FA = get_sentence_FA(Project, sub, runname, ses=ses)
+        if time_criteria == "end": FA = (np.array(FA)[:,1]).astype(int)/time
+        else: FA = (np.array(FA)[1:,0]).astype(int)/time
+
+        if len(FA) != len(NSP): FA = FA[:len(NSP)]
+        return(NSP, FA.astype(int))
 
 
 
@@ -441,10 +454,10 @@ def load_NSP_boundary(Project, sub, runname, ses=None, raw=True, bin=[-10,2], tr
     Returns:
         TR boundary array (int)
     """
-    nextprop = load_NSP(Project, sub, runname, raw=raw)
+    nextprop = load_NSP(Project, sub, runname, ses=ses, raw=raw)
     
                 
-    sentence = np.array(get_sentence_FA(Project, sub, runname))[:,:-1].astype(int)
+    sentence = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,:-1].astype(int)
 
     if boundary == 'start':
         sentence = sentence[1:,0]
@@ -479,7 +492,7 @@ def load_PL(Project, sub, runname, ses=None, tr=1000):
 
     fa = np.array(get_sentence_FA(Project, sub, runname))[:,:-1].astype(int)
     pause = [fa[i,0]-fa[i-1,1] for i in range(1,fa.shape[0])]
-    np.array(pause, int)/tr
+    pause = np.array(pause, int)/tr
     return pause
         
 
@@ -500,7 +513,7 @@ def load_PL_boundary(Project, sub, runname, ses=None, bin=[80,100], tr=1000):
     """
     from .tools import isWSL
 
-    fa = np.array(get_sentence_FA(Project, sub, runname))[:,:-1].astype(int)
+    fa = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,:-1].astype(int)
     sentence = fa[:-1,1]
     pause = [fa[i,0]-fa[i-1,1] for i in range(1,fa.shape[0])]
 
@@ -509,3 +522,49 @@ def load_PL_boundary(Project, sub, runname, ses=None, bin=[80,100], tr=1000):
     
     return np.array(bound/tr, int)
 
+
+
+def load_embeddings(Project, sub, runname, ses=None, save=False):
+    from . import load_project_info
+    audio_path = load_project_info.get_audio_path(Project, derivatives=True)
+    audio_path = os.path.join(audio_path, "sub-"+sub)
+    if ses != None:
+        audio_path = os.path.join(audio_path, "ses-"+str(ses))
+    
+    if ses == None: filename = f"sub-{sub}_task-{runname}_embedding.npy"
+    else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_embedding.npy"
+    
+    if save:
+        from .tools_NLP import get_sentence_embedding
+        sentence = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,-1]
+        embeddings = get_sentence_embedding(sentence)
+        np.save(os.path.join(audio_path, filename), embeddings)
+    else:
+        try:
+            embeddings = np.load(os.path.join(audio_path, filename))
+        except:
+            from .tools_NLP import get_sentence_embedding
+            sentence = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,-1]
+            embeddings = get_sentence_embedding(sentence)
+            np.save(os.path.join(audio_path, filename), embeddings)
+            
+    
+    return(embeddings)
+
+
+def get_embedding_distance(Project, sub, runname, ses=None, metric='cosine'):
+    from sklearn.metrics import pairwise_distances
+    embeddings = load_embeddings(Project, sub, runname, ses=ses)
+    dist_matrix = pairwise_distances(embeddings, metric=metric)
+    return np.diag(dist_matrix, k=1)
+
+
+def get_boundary_sentence(Project, sub, runname, boundary='ev1', ses=None):
+    FA = np.array(get_sentence_FA(Project, sub, runname, ses=None))
+    end = (FA[:,1]).astype(int)
+    ev = load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1)
+    mask = []
+    for t in end:
+        if t in ev: mask.append(1)
+        else: mask.append(0)
+    return(np.array(mask,bool))

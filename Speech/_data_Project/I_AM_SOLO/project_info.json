@@ -1,0 +1,86 @@
+{
+    "Name": "I_AM_SOLO",
+    "bids_path": "/mnt/f/I_AM_SOLO/_DATA_fMRI",
+    "bids_path_window": "F:/I_AM_SOLO/_DATA_fMRI",
+    "audio_path": "/mnt/f/I_AM_SOLO/_DATA_Behavior",
+    "audio_path_window": "F:/I_AM_SOLO/_DATA_Behavior",
+    "info": [
+        {
+            "name": "acq-GRE",
+            "type": "fmap",
+            "modality": "magnitude"
+        },
+        {
+            "name": "acq-GRE",
+            "type": "fmap",
+            "modality": "phase"
+        },
+        {
+            "name": "dir-AP",
+            "type": "fmap",
+            "modality": "epi"
+        },
+        {
+            "name": "RATING",
+            "type": "func",
+            "runs": 7,
+            "modality": "bold"
+        },
+        {
+            "name": "INTRO",
+            "type": "func",
+            "runs": 2,
+            "modality": "bold"
+        },
+        {
+            "name": "SAME",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        },
+        {
+            "name": "DIFF",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        },
+        {
+            "name": "WHOISHE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        },
+        {
+            "name": "WHOISSHE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        },
+        {
+            "name": "RANKING",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        },
+        {
+            "name": "T1",
+            "type": "anat",
+            "modality": "T1w"
+        },
+        {
+            "name": "inv-1",
+            "type": "anat",
+            "modality": "MP2RAGE"
+        },
+        {
+            "name": "inv-2",
+            "type": "anat",
+            "modality": "MP2RAGE"
+        },
+        {
+            "name": "rec-DERIVED",
+            "type": "anat",
+            "modality": "UNIT1"
+        }
+    ]
+}

@@ -139,3 +139,23 @@ def glm(input, X, apply_hrf=True, tr=1000):
     betas = np.dot(np.dot(np.linalg.pinv(np.dot(X_hrf.T, X_hrf)), X_hrf.T), input.T)
     return betas
     
+    
+def p_from_dist(x, dist, alternative="two-sided"):
+    """ Calculate p-value from distribution
+
+    Args:
+        x (float): value
+        dist (array): distribution
+
+    Returns:
+        float: p-value
+    """
+    from scipy.stats import norm
+    z = (x-np.mean(dist))/np.std(dist)
+    if alternative == "two-sided":
+        p = 2*(1-norm.cdf(abs(z)))
+    elif alternative == "greater":
+        p = 1-norm.cdf(z)
+    elif alternative == "less":
+        p = norm.cdf(z)
+    return(p)

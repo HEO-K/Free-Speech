@@ -5,7 +5,7 @@ import glob
 import json
 import pandas as pd
 import subprocess as sp
-from Speech.load_project_info import get_full_info
+from Speech.load_project_info import get_full_info,get_brain_path
 import zipfile
 import re
 from Speech.tools import isWSL
@@ -356,22 +356,23 @@ def run_dcm2bids(Project, sub, input_path, ses=None):
 ################################ Prep 이후 denosing ###################################
 # load (prep) confound
 def load_confounds(Project, sub, runname, ses=None):
-    info = get_full_info(Project)
-    if isWSL():
-        bids_path = info['bids_path']
-    else:
-        bids_path = info['bids_path_window']
+    bids_path = get_brain_path(Project)
+    sub_path = os.path.join(bids_path,  "sub-"+sub)
+    
+    
     sub = "sub-"+sub
     task = "_task-"+runname
-    sub_path = os.path.join(bids_path, "derivatives", sub)
+    
     if ses == None: ses = ""
     else: 
         sub_path = os.path.join(sub_path, "ses-"+ses)
         ses = "_ses-" + ses
     sub_path = os.path.join(sub_path, "func")
-    tsv_name = sub+ses+task+"_desc-confounds_timeseries.tsv"
+    tsv_name = sub+ses+task+"_desc-confounds_*.tsv"
     
     confounds= os.path.join(sub_path, tsv_name)
+    confounds = glob.glob(confounds)[0]
+    
     
     df = pd.read_csv(confounds, sep='\t')
     return df
@@ -406,6 +407,10 @@ def clean_data(data, confounds, custom_columns=None):
         'rot_y', 'rot_y_derivative1',
         'rot_z', 'rot_z_derivative1',
     ]
+    
+    if custom_columns != None:
+        columns = custom_columns
+    
     # a_compcor
     n_comp_cor = 6 # top 6
     columns += [f"a_comp_cor_{c:02d}" for c in range(n_comp_cor)]
@@ -429,7 +434,7 @@ def clean_data(data, confounds, custom_columns=None):
 
 
 # load confound + clean data
-def DN(Project, sub, runname, ses=None):
+def DN(Project, sub, runname, ses=None, custom_columns=None):
     # confound
     fmri_compounds = load_confounds(Project, sub, runname, ses)
     # epi
@@ -443,7 +448,7 @@ def DN(Project, sub, runname, ses=None):
         file_path = os.path.join(file_path, "func", "*"+runname+"_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
     else:
         file_path = os.path.join(file_path, "ses-"+ses, "func", "*"+runname+"_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
-    file_path = glob.glob(file_path)[0]
+    file_path = glob.glob(file_path)[-1]
     fmri_data = nib.load(file_path)
     vox = fmri_data.header.get_zooms()[0]
     vox = "{:.1f}".format(vox)
@@ -458,7 +463,7 @@ def DN(Project, sub, runname, ses=None):
     fmri_data = fmri_data[mni_mask==1,:].T
 
     # cleaning
-    fmri_clean = clean_data(fmri_data, fmri_compounds)
+    fmri_clean = clean_data(fmri_data, fmri_compounds, custom_columns=custom_columns)
     fmri_clean = fmri_clean.astype(np.float32)
     new_image = np.zeros(mni_mask.shape+(fmri_data.shape[0],), dtype=np.float32)
     new_image[mni_mask==1,:] = fmri_clean.T
@@ -503,7 +508,7 @@ def save_motion(Project, sub, ses=None, threshold=0.05):
     # 존재하는 파일만 사용한다.
     files = []
     for name in runnames:
-        file_path = glob.glob(os.path.join(func_path, "*"+name+"*confounds_timeseries.tsv"))
+        file_path = glob.glob(os.path.join(func_path, "*"+name+"*confounds_*.tsv"))
         if len(file_path)>0: files.append(file_path[0])
         
 

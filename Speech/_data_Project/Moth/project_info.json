@@ -1,0 +1,47 @@
+{
+    "Name": "Moth",
+    "bids_path": "/mnt/e/Moth/_DATA_fMRI",
+    "bids_path_window": "E:/Moth/_DATA_fMRI",
+    "audio_path": "/mnt/e/Moth/_DATA_Audio",
+    "audio_path_window": "E:/Moth/_DATA_Audio",
+    "ses-1": [
+        {
+            "name": "T1w",
+            "type": "anat",
+            "modality": "T1w"
+        }
+    ],
+    "ses-2": [
+        {
+            "name": "alternateithicatom",
+            "type": "func",
+            "modality": "bold"
+        },
+        {
+            "name": "avatar",
+            "type": "func",
+            "modality": "bold"
+        },
+        {
+            "name": "legacy",
+            "type": "func",
+            "modality": "bold"
+        },
+        {
+            "name": "odetostepfather",
+            "type": "func",
+            "modality": "bold"
+        },
+        {
+            "name": "souls",
+            "type": "func",
+            "modality": "bold"
+        },
+        {
+            "name": "wheretheressmoke",
+            "type": "func",
+            "modality": "bold"
+        }
+    ]
+
+}

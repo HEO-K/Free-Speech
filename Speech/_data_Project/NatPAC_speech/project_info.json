@@ -1,9 +1,9 @@
 {
     "Name": "NatPAC_speech",
-    "bids_path": "/mnt/d/NatPAC/_DATA_fMRI",
-    "bids_path_window": "D:/NatPAC/_DATA_fMRI",
-    "audio_path": "/mnt/d/NatPAC/_DATA_Audio",
-    "audio_path_window": "D:/NatPAC/_DATA_Audio",
+    "bids_path": "/mnt/e/NatPAC/_DATA_fMRI",
+    "bids_path_window": "E:/NatPAC/_DATA_fMRI",
+    "audio_path": "/mnt/e/NatPAC/_DATA_Audio",
+    "audio_path_window": "E:/NatPAC/_DATA_Audio",
     "ses-01": [
         {
             "name": "speechFREE",

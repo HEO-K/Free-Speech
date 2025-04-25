@@ -3,26 +3,37 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def timeseries_with_error(data, label: str = False, color: any="C0", fill=True, linewidth=1, alpha=0.1):
+def timeseries_with_error(data, x=None, label: str = False, color: any="C0", 
+                          fill=True, linewidth=1, alpha=0.1, ax=None, **kwargs):
     """ Error 범위 timeseries plot
     
     Args
-        data (array): (time, n) 2d array
+        data (array): (n, time) 2d array
+        x (array, optional): data x축, Defaults to (0, length of data)
         label (str, optional): data's label, Defaults to True
         color (mpl.color, optional): color, Defaults to 'C0'
         fill (bool, optional): 에러 표시 방법, 직선 표시 vs 채우기
     """
     from scipy.stats import sem
-    means = np.nanmean(data, axis=1)
-    error = sem(data, axis=1)
-    if fill:
-        plt.plot(means, c=color, label=label, linewidth=linewidth)
-        plt.fill_between(np.arange(data.shape[0]), means+error, 
-                            means-error, alpha=alpha, color=color)
+    means = np.nanmean(data, axis=0)
+    error = sem(data, axis=0)
+    try:
+        if len(x) != len(means): x = np.arange(data.shape[1])
+    except: 
+        x = np.arange(data.shape[1])
+    
+    if ax==None:
+        if fill:
+            plt.plot(x, means, c=color, label=label, linewidth=linewidth, **kwargs)
+            plt.fill_between(x, means+error, means-error, alpha=alpha, color=color, **kwargs)
+        else:
+            plt.errorbar(x, means, c=color, label=label, yerr=error, linewidth=linewidth, **kwargs)
     else:
-        plt.errorbar(np.arange(0,data.shape[0]), means, c=color, label=label, yerr=error)
-    return
-
+        if fill:
+            ax.plot(x, means, c=color, label=label, linewidth=linewidth, **kwargs)
+            ax.fill_between(x, means+error, means-error, alpha=alpha, color=color, **kwargs)
+        else:
+            ax.errorbar(x, means, c=color, label=label, yerr=error, linewidth=linewidth, **kwargs)
 
 def mni_surface_plot(data, voxel="3.0", view="lateral", **kwargs):
     """ MNI surface plot, WSL의 경우 cortex.webshow, 윈도우의 경우 nilearn.view_img_on_surf의 브라우저
@@ -50,17 +61,43 @@ def mni_surface_plot(data, voxel="3.0", view="lateral", **kwargs):
         viewer = cortex.webgl.show(ex)
         viewer.get_view("cvs_avg35_inMNI152", view)
 
+
+def mni_surface_2dplot(data1, data2, voxel="3.0", view="lateral", **kwargs):
+    """ MNI surface 2dplot
+        
+    Args:
+        data1 (array): (x,y,z) 또는 (n,x,y,z) 데이터,
+        data2 (array): (x,y,z) 또는 (n,x,y,z) 데이터
+        voxel (str, optional): 복셀 크기(mm), Defaults to '3.0'
+        view (str, optional): pycortex view
+        kwargs: cortex.Volume or nilearn.view_img_on_surf args
+    """
+    from Speech.tools import isWSL
+    if isWSL():
+        import cortex
+        if len(data1.shape) == 3:
+            data1 = data1.transpose(2,1,0)
+        elif len(data1.shape) == 4:
+            data1 = data1.transpose(0,3,2,1)
+        else:
+            raise ValueError("Invalid data1 shape")
+
+        if len(data2.shape) == 3:
+            data2 = data2.transpose(2,1,0)
+        elif len(data2.shape) == 4:
+            data2 = data2.transpose(0,3,2,1)
+        else:
+            raise ValueError("Invalid data2 shape")
+
+        transform_name = 'mni_'+str(voxel)+"mm"
+        ex = cortex.Volume2D(data1, data2,
+                           "cvs_avg35_inMNI152", transform_name,
+                           **kwargs)
+        viewer = cortex.webgl.show(ex)
+        viewer.get_view("cvs_avg35_inMNI152", view)
     
     else:
-        from . import tools_EPI
-        from nilearn.plotting import view_img_on_surf
-        from nltools.data import Brain_Data
-        
-        data = tools_EPI.data_to_MNI_nltools(data, voxel_size = voxel)
-        plot_data = view_img_on_surf(data.to_nifti(), surf_mesh="fsaverage",
-                                     **kwargs)
-        plot_data.open_in_browser()
-        
+        raise OSError("You must change to WSL environment")
 
 def save_mni_img(data, view="both", voxel="3.0", filename='now',
                      path='/mnt/c/Users/Kwon/Downloads', **kwargs):
@@ -324,4 +361,35 @@ def plot_corrmat_and_boundary(ax, data_matrix, bounds, patchset={}, is_corrmat=F
             ax.add_patch(rect)     
     
 
+def plot_colorline(x, y, z=None, cmap='copper', **kwargs):
+    import matplotlib.collections as mcoll
+    # Default colors equally spaced on [0,1]:
+    if z is None:
+        z = np.linspace(0.0, 1.0, len(x))
+
+    # Special case if a single number:
+    # to check for numerical input -- this is a hack
+    if not hasattr(z, "__iter__"):
+        z = np.array([z])
+
+    z = np.asarray(z)
+
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+    lc = mcoll.LineCollection(segments, array=z, cmap=cmap, norm=plt.Normalize(0.0, 1.0), **kwargs)
+
+    ax = plt.gca()
+    ax.add_collection(lc)
+
+    return lc
+
+
+def plot_star(p, x, y, plot_dagger=False, **kwargs):
+    if len(kwargs) == 0:
+        kwargs = {'ha':'center', 'fontdict':{'font':'DejaVu Sans', 'size': 9}}
+    if p<0.001: plt.text(x, y, "***", **kwargs)
+    elif p<0.01: plt.text(x, y, "**", **kwargs)
+    elif p<0.05: plt.text(x, y, "*", **kwargs)
+    elif p<0.1:
+        if plot_dagger: plt.text(x, y, "†", **kwargs)
 # %%

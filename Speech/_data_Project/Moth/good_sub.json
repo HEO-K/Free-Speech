@@ -1,0 +1,55 @@
+{
+    "ses-2": {
+        "alternateithicatom": [
+            "UTS01",
+            "UTS02",
+            "UTS03",
+            "UTS04",
+            "UTS05",
+            "UTS06",
+            "UTS07"
+        ],
+        "avatar": [
+            "UTS01",
+            "UTS02",
+            "UTS03",
+            "UTS04",
+            "UTS05",
+            "UTS07",
+            "UTS08"
+        ],
+        "legacy": [
+            "UTS01",
+            "UTS02",
+            "UTS03",
+            "UTS04",
+            "UTS05",
+            "UTS07"
+        ],
+        "odetostepfather": [
+            "UTS01",
+            "UTS02",
+            "UTS03",
+            "UTS04",
+            "UTS05"
+        ],
+        "souls": [
+            "UTS01",
+            "UTS02",
+            "UTS03",
+            "UTS04",
+            "UTS05",
+            "UTS06",
+            "UTS07"
+        ],
+        "wheretheressmoke": [
+            "UTS01",
+            "UTS02",
+            "UTS03",
+            "UTS04",
+            "UTS05",
+            "UTS06",
+            "UTS07"
+        ]
+    }
+}

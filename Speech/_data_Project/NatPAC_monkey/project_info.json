@@ -1,0 +1,15 @@
+{
+    "Name": "NatPAC_speech",
+    "bids_path": "/mnt/e/NatPAC/_DATA_fMRI",
+    "bids_path_window": "E:/NatPAC/_DATA_fMRI",
+    "audio_path": "/mnt/e/NatPAC/_DATA_Audio",
+    "audio_path_window": "E:/NatPAC/_DATA_Audio",
+    "ses-11": [
+        {
+            "name": "movieMONKEY",
+            "type": "func",
+            "runs": 5,
+            "modality": "bold"
+        }
+    ]
+}
