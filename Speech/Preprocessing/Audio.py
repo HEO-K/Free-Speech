@@ -17,8 +17,8 @@ def Clova_STT(file_path, lang="ko-KR", output="", save_STT=True, showresults=Fal
             showresults: 결과 출력 여부 (default: False)
     """
     
-    invoke_url = 'https://clovaspeech-gw.ncloud.com/external/v1/2227/2752bda02f64f65c39aef44ddfe935dd3a6a7c9c061e687484f67707ee3f975c'
-    secret = '03bbf8f1bea54866bbd108c26845160e'          
+    invoke_url = 'Clova URL'
+    secret = 'Clova secret key'          
     request_body = {
         'language': lang,
         'completion': 'sync',
