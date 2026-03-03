@@ -151,8 +151,8 @@ def Clova_confidence(file_path, lang="ko-KR"):
             file_path (str): 오디오 파일 경로
     """
     
-    invoke_url = 'https://clovaspeech-gw.ncloud.com/external/v1/2227/2752bda02f64f65c39aef44ddfe935dd3a6a7c9c061e687484f67707ee3f975c'
-    secret = '03bbf8f1bea54866bbd108c26845160e'          
+    invoke_url = 'Clova URL'
+    secret = 'Clova secret key'          
     request_body = {
         'language': lang,
         'completion': 'sync',
