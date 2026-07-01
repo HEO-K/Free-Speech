@@ -325,7 +325,7 @@ def get_sentence_FA(Project, sub, runname, ses=None, only_timestamp=False, tr=10
     s = 0
     
     sen_FA = []
-    for i in range(1,len(words)):
+    for i in range(len(words)):
         if words[i][-1] == ".":
             sen_FA.append([FA[s][0], FA[i][1], " ".join(words[s:i+1])])
             s = i+1
@@ -382,7 +382,7 @@ def load_NSP(Project, sub, runname, ses=None, raw=True, save=False,
         runname (str): task이름, ex) speechTOPIC_run-1
         ses (str or int, optional): session number, Defaults to None.
         raw (bool, optional): get raw NSP. Default to True.
-        save (bool, optional): Save file? Defaults to True.
+        save (bool, optional): Save file? Defaults to False.
         reverse (bool, optional): Transition value?
         time (int, optional): Load NSP with time. None or TR(ms)
         time_criteria (str, optional): Time criteria. end or start
@@ -488,7 +488,6 @@ def load_PL(Project, sub, runname, ses=None, tr=1000):
     Returns:
         PL list
     """    
-    from .tools import isWSL
 
     fa = np.array(get_sentence_FA(Project, sub, runname))[:,:-1].astype(int)
     pause = [fa[i,0]-fa[i-1,1] for i in range(1,fa.shape[0])]
@@ -511,7 +510,6 @@ def load_PL_boundary(Project, sub, runname, ses=None, bin=[80,100], tr=1000):
     Returns:
         TR boundary array (int)
     """
-    from .tools import isWSL
 
     fa = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,:-1].astype(int)
     sentence = fa[:-1,1]
@@ -568,3 +566,19 @@ def get_boundary_sentence(Project, sub, runname, boundary='ev1', ses=None):
         if t in ev: mask.append(1)
         else: mask.append(0)
     return(np.array(mask,bool))
+
+
+
+def load_topic(Project, sub, runname, ses=None):
+    from . import load_project_info
+    audio_path = load_project_info.get_audio_path(Project,derivatives=True)
+    audio_path = os.path.join(audio_path, "sub-"+sub)
+    if ses != None:
+        audio_path = os.path.join(audio_path, "ses-"+str(ses))
+        
+    if ses == None: filename = f"sub-{sub}_task-{runname}_topic.txt"
+    else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_topic.txt"    
+    
+    with open(os.path.join(audio_path, filename), "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    return(lines)

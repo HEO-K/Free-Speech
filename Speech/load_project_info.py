@@ -23,7 +23,7 @@ def get_full_info(Project):
 
 
 
-def get_run_names(Project, ses=None):
+def get_run_names(Project, ses=None, only_func=True):
     """ Run 이름 생성기
     
     Args:
@@ -39,12 +39,18 @@ def get_run_names(Project, ses=None):
     else: run_info = info["ses-"+ses]  
     runnames = []
     for run in run_info:
-        if 'runs' in run.keys():
-            for i in range(1, run["runs"]+1):
-                runnames.append(run["name"]+"_run-"+str(i))
-        else: runnames.append(run["name"])
-    if "T1" in runnames: runnames.remove("T1")
-        
+        if only_func:
+            if run['type'] == 'func':
+                if 'runs' in run.keys():
+                    for i in range(1, run["runs"]+1):
+                        runnames.append(run["name"]+"_run-"+str(i))
+                else: runnames.append(run["name"])
+        else:
+            if 'runs' in run.keys():
+                for i in range(1, run["runs"]+1):
+                    runnames.append(run["name"]+"_run-"+str(i))
+            else: runnames.append(run["name"])     
+    
     return runnames
 
 

@@ -124,11 +124,13 @@ def load_roi(name, output="mask", vox="3.0"):
         "HPC": ["Brainnetome", [215,216,217,218],],
         "PCN": ["Schaefer2018_400Parcels_17Networks", [144,145,146,147,148,351,352,353,354,355,356,357]],
         "IPS": ["Schaefer2018_400Parcels_17Networks", [122,123,124,125,126,325,326,327,328]],
-        "rIPS": ["Schaefer2018_400Parcels_17Networks", [325,326,327,328]],
-        "rIPL": ["Schaefer2018_400Parcels_17Networks", [325,326,327,328,304]],
+        "rIPS": ["Schaefer2018_400Parcels_17Networks", [325,326,327,328,304]],  # 304
+        "PMC-core": ["Schaefer2018_400Parcels_17Networks", list(np.arange(154,161))+list(np.arange(363,368))],
         "PCun": ["Schaefer2018_400Parcels_17Networks", list(np.arange(154,161))+list(np.arange(363,368))],
         "A1": ["Schaefer2018_400Parcels_17Networks", [44,45,244,245]],
-        
+        "RSC": ["Schaefer2018_400Parcels_17Networks", [144,145,351,352]],
+        "PCC": ["Schaefer2018_400Parcels_17Networks", [147,148,356,357]],
+        "AG": ["Schaefer2018_400Parcels_17Networks", [149,150,359,360]],
     }
     
     from Speech.tools_EPI import get_parcel_roi_mask
@@ -148,6 +150,7 @@ def load_colors(name, scale=1, alpha=None):
         "rIPS": [233,168,31],
         "rIPL": [233,168,31],
         "PCun": [252,243,50],
+        "PMC-core": [252,243,50],
         "HPC": [171,0,237],
         "ev1": [255,65,74],
         "ev": [255,65,74],

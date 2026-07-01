@@ -6,19 +6,21 @@ import os
 import warnings
 
 # STT
-def Clova_STT(file_path, lang="ko-KR", output="", save_STT=True, showresults=False):
+def Clova_STT(file_path, lang="ko-KR", output="", save_STT=False, save_confidence=False, save_csv=False, save_speaker=False, showresults=False):
     """ 오디오 파일의 받아쓰기 결과(_STT.txt) & 단어 정렬 결과(_FA.txt) 저장
     
         Args: 
             file_path (str): 오디오 파일 경로
             lang (str): 받아쓸 언어 (default: ko-KR)
             output (str): STT, FA결과 저장할 경로 (default: 오디오 파일 위치)
-            save_STT: STT결과 저장 여부 (default: True)
+            save_STT: STT결과 저장 여부 (default: False)
+            save_csv: FA결과 csv파일로 저장 여부 (default: False, txt파일로 저장)
+            save_confidence: confidence 저장 여부 (default: False)
             showresults: 결과 출력 여부 (default: False)
     """
     
-    invoke_url = 'Clova URL'
-    secret = 'Clova secret key'          
+    invoke_url = 'https://clovaspeech-gw.ncloud.com/external/v1/2227/2752bda02f64f65c39aef44ddfe935dd3a6a7c9c061e687484f67707ee3f975c'
+    secret = '03bbf8f1bea54866bbd108c26845160e'            
     request_body = {
         'language': lang,
         'completion': 'sync',
@@ -45,20 +47,56 @@ def Clova_STT(file_path, lang="ko-KR", output="", save_STT=True, showresults=Fal
     #  STT와 FA결과
     results = json.loads(results)
     sentences = results['segments']
+    
+    if save_confidence:
+        scores = []
+        for line in sentences:
+            scores.append(line['confidence'])
+            
+        
     full_text = results['text']
-    FA = sentences[0]['words']
-    for i in range(1,len(sentences)):
-        FA = FA + sentences[i]['words']
+    if save_speaker:
+        FA = sentences[0]['words']
+        speaker_label = sentences[0]['speaker']['label']
+        for n in range(len(FA)):
+            FA[n] = [speaker_label] + FA[n]
+        for i in range(1,len(sentences)):
+            word_list = sentences[i]['words']
+            speaker_label = sentences[i]['speaker']['label']
+            for n in range(len(word_list)):
+                word_list[n] = [speaker_label] + word_list[n] 
+            FA = FA + word_list
+    else:
+        FA = sentences[0]['words']
+        for i in range(1,len(sentences)):
+            FA = FA + sentences[i]['words']
     # 결과 저장하기
     if len(output) == 0:
         if save_STT:
             f_stt = open(file_path.split(".")[0]+"_STT.txt", 'w', encoding="utf-8")
             f_stt.write(full_text)
             f_stt.close()
-        f_FA = open(file_path.split(".")[0]+"_FA.txt", 'w', encoding="utf-8")
-        for i in range(len(FA)):
-            f_FA.write('{0:<8}{1:<8}{2}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2])))
-        f_FA.close()
+        if save_csv:
+            f_csv = open(file_path.split(".")[0]+"_FA.csv", 'w', encoding="utf-8-sig")
+            f_csv.write("start_time,end_time,word\n")
+            for i in range(len(FA)):
+                f_csv.write('{0},{1},{2}\n'.format(str(FA[i][0]), str(FA[i][1]), str(FA[i][2])))
+            f_csv.close()
+        if save_speaker:
+            f_FA = open(file_path.split(".")[0]+"_FA.txt", 'w', encoding="utf-8")
+            for i in range(len(FA)):
+                f_FA.write('{0:<8}{1:<8}{2:<8}{3}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2]), str(FA[i][3])))
+            f_FA.close()
+        else:
+            f_FA = open(file_path.split(".")[0]+"_FA.txt", 'w', encoding="utf-8")
+            for i in range(len(FA)):
+                f_FA.write('{0:<8}{1:<8}{2}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2])))
+            f_FA.close()
+        if save_confidence:
+            f_confidence = open(file_path.split(".")[0]+"_confidence.txt", 'w', encoding="utf-8")
+            for score in scores:
+                f_confidence.write(str(score)+"\n")
+            f_confidence.close()
     else:
         try:
             filename = os.path.basename(file_path).split(".")[0]
@@ -66,20 +104,49 @@ def Clova_STT(file_path, lang="ko-KR", output="", save_STT=True, showresults=Fal
                 f_stt = open(os.path.join(file_path, filename+"_STT.txt"), 'w', encoding="utf-8")
                 f_stt.write(full_text)
                 f_stt.close()
-            f_FA = open(os.path.join(file_path, filename+"_FA.txt"), 'w', encoding="utf-8")
-            for i in range(len(FA)):
-                f_FA.write('{0:<8}{1:<8}{2}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2])))
-            f_FA.close()
+            if save_csv:
+                f_csv = open(file_path.split(".")[0]+"_FA.csv", 'w', encoding="utf-8-sig")
+                f_csv.write("start_time,end_time,word\n")
+                for i in range(len(FA)):
+                    f_csv.write('{0},{1},{2}\n'.format(str(FA[i][0]), str(FA[i][1]), str(FA[i][2])))
+                f_csv.close()
+            if save_speaker:
+                f_FA = open(file_path.split(".")[0]+"_FA.txt", 'w', encoding="utf-8")
+                for i in range(len(FA)):
+                    f_FA.write('{0:<8}{1:<8}{2:<8}{3}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2]), str(FA[i][3])))
+                f_FA.close()
+            else:
+                f_FA = open(os.path.join(file_path, filename+"_FA.txt"), 'w', encoding="utf-8")
+                for i in range(len(FA)):
+                    f_FA.write('{0:<8}{1:<8}{2}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2])))
+                f_FA.close()
+            if save_confidence:
+                f_confidence = open(os.path.join(file_path, filename+"_confidence.txt"), 'w', encoding="utf-8")
+                for score in scores:
+                    f_confidence.write(str(score)+"\n")
+                f_confidence.close()
         except:
             warnings.warn(f'Path "{output}" does not exist. Save at audio path "{os.path.dirname(file_path)}"')
             if save_STT:
                 f_stt = open(file_path.split(".")[0]+"_STT.txt", 'w', encoding="utf-8")
                 f_stt.write(full_text)
                 f_stt.close()
-            f_FA = open(file_path.split(".")[0]+"_FA.txt", 'w', encoding="utf-8")
-            for i in range(len(FA)):
-                f_FA.write('{0:<8}{1:<8}{2}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2])))
-            f_FA.close()            
+            if save_csv:
+                f_csv = open(file_path.split(".")[0]+"_FA.csv", 'w', encoding="utf-8-sig")
+                f_csv.write("start_time,end_time,word\n")
+                for i in range(len(FA)):
+                    f_csv.write('{0},{1},{2}\n'.format(str(FA[i][0]), str(FA[i][1]), str(FA[i][2])))
+                f_csv.close()
+            else:
+                f_FA = open(file_path.split(".")[0]+"_FA.txt", 'w', encoding="utf-8")
+                for i in range(len(FA)):
+                    f_FA.write('{0:<8}{1:<8}{2}\n'.format(FA[i][0], str(FA[i][1]), str(FA[i][2])))
+                f_FA.close()          
+            if save_confidence:
+                f_confidence = open(file_path.split(".")[0]+"_confidence.txt", 'w', encoding="utf-8")
+                for score in scores:
+                    f_confidence.write(str(score)+"\n")
+                f_confidence.close()  
     if showresults: return(results)
 
 # second processing

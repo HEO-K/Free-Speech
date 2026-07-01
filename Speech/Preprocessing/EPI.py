@@ -393,12 +393,11 @@ def make_poly_regressors(n_samples, order=2):
 
 
 # denosing
-def clean_data(data, confounds, custom_columns=None):
+def clean_data(data, confounds, global_signal=True, custom_columns=None):
     import scipy.linalg as la
 
     # default로 설정된 noise들
     columns = [
-        'global_signal',
         'framewise_displacement',
         'trans_x', 'trans_x_derivative1',
         'trans_y', 'trans_y_derivative1',
@@ -408,13 +407,17 @@ def clean_data(data, confounds, custom_columns=None):
         'rot_z', 'rot_z_derivative1',
     ]
     
+    if global_signal: columns = columns+["global_signal"]
+    
     if custom_columns != None:
         columns = custom_columns
     
     # a_compcor
     n_comp_cor = 6 # top 6
     columns += [f"a_comp_cor_{c:02d}" for c in range(n_comp_cor)]
-    X = confounds[columns].values
+
+    valid_columns = [col for col in columns if col in confounds.columns]
+    X = confounds[valid_columns].values
 
     # remove nans
     X[np.isnan(X)] = 0.
@@ -430,11 +433,13 @@ def clean_data(data, confounds, custom_columns=None):
     coef, _, _, _ = la.lstsq(X, data)
     # remove trends and add back mean of the data
     data_clean = data - X.dot(coef) + data_mean
+    print("\n")
+    print(f'Denoise {columns}')
     return data_clean
 
 
 # load confound + clean data
-def DN(Project, sub, runname, ses=None, custom_columns=None):
+def DN(Project, sub, runname, ses=None, epi_space="MNI152NLin2009cAsym", custom_columns=None, global_signal=True):
     # confound
     fmri_compounds = load_confounds(Project, sub, runname, ses)
     # epi
@@ -445,9 +450,9 @@ def DN(Project, sub, runname, ses=None, custom_columns=None):
     else:
         return "Change to WSL"
     if ses == None:
-        file_path = os.path.join(file_path, "func", "*"+runname+"_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
+        file_path = os.path.join(file_path, "func", "*task-"+runname+f"_space-{epi_space}_desc-preproc_bold.nii.gz")
     else:
-        file_path = os.path.join(file_path, "ses-"+ses, "func", "*"+runname+"_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
+        file_path = os.path.join(file_path, "ses-"+ses, "func", "*task-"+runname+f"_space-{epi_space}_desc-preproc_bold.nii.gz")
     file_path = glob.glob(file_path)[-1]
     fmri_data = nib.load(file_path)
     vox = fmri_data.header.get_zooms()[0]
@@ -455,21 +460,27 @@ def DN(Project, sub, runname, ses=None, custom_columns=None):
     fmri_data = fmri_data.get_fdata()
 
     # mni
-    mni_path = __file__
-    mni_path = os.path.abspath(os.path.join(mni_path, "..", '..', '_data_Atlas', 'MNI'))
-    mni_mask = nib.load(os.path.join(mni_path, "MNI_"+vox+"mm_mask.nii.gz")).get_fdata()
-    mni_image = nib.load(os.path.join(mni_path, "MNI_"+vox+"mm.nii.gz"))
+    if epi_space == "MNI152NLin2009cAsym":
+        mni_path = __file__
+        mni_path = os.path.abspath(os.path.join(mni_path, "..", '..', '_data_Atlas', 'MNI'))
+        mni_mask = nib.load(os.path.join(mni_path, "MNI_"+vox+"mm_mask.nii.gz")).get_fdata()
+        mni_image = nib.load(os.path.join(mni_path, "MNI_"+vox+"mm.nii.gz"))
+    else:
+        mni_path = file_path.replace("-preproc_bold.nii.gz", "-brain_mask.nii.gz")
+        mni_image = nib.load(mni_path)
+        mni_mask = mni_image.get_fdata()
     # masking
     fmri_data = fmri_data[mni_mask==1,:].T
 
     # cleaning
-    fmri_clean = clean_data(fmri_data, fmri_compounds, custom_columns=custom_columns)
+    fmri_clean = clean_data(fmri_data, fmri_compounds, 
+                            global_signal=global_signal, custom_columns=custom_columns)
     fmri_clean = fmri_clean.astype(np.float32)
     new_image = np.zeros(mni_mask.shape+(fmri_data.shape[0],), dtype=np.float32)
     new_image[mni_mask==1,:] = fmri_clean.T
 
     # save
-    save_path = file_path.split("_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")[0]+".nii.gz"
+    save_path = file_path.split(f"_space-{epi_space}_desc-preproc_bold.nii.gz")[0]+f"_space-{epi_space}_desc-DN.nii.gz"
     nib.save(nib.Nifti1Image(new_image, mni_image.affine),save_path)
     print("\n")
     print("---------------------------------------------------------------------")
@@ -508,7 +519,7 @@ def save_motion(Project, sub, ses=None, threshold=0.05):
     # 존재하는 파일만 사용한다.
     files = []
     for name in runnames:
-        file_path = glob.glob(os.path.join(func_path, "*"+name+"*confounds_*.tsv"))
+        file_path = glob.glob(os.path.join(func_path, "*task-"+name+"*confounds_*.tsv"))
         if len(file_path)>0: files.append(file_path[0])
         
 
@@ -619,7 +630,7 @@ def save_motion(Project, sub, ses=None, threshold=0.05):
     print("---------------------------------------------------------------------")
 
 
-def save_tsnr(Project, sub, ses=None):
+def save_tsnr(Project, sub, ses=None, epi_space="MNI152NLin2009cAsym"):
     import matplotlib.pyplot as plt
     import nibabel as nib
     from tqdm import tqdm
@@ -651,7 +662,7 @@ def save_tsnr(Project, sub, ses=None):
     files = []
     for name in runnames:
         file_path = glob.glob(os.path.join(func_path, 
-                                           "*"+name+"*space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"))
+                                           "*"+name+f"*space-{epi_space}_desc-preproc_bold.nii.gz"))
         if len(file_path)>0: files.append(file_path[0])
     
     # Yeo network에 들어오는 값만 사용한다.
@@ -728,7 +739,7 @@ def save_tsnr(Project, sub, ses=None):
         
 
 
-def sc_dt_hp_sm(Project, sub, runname, ses=None):
+def sc_dt_hp_sm(Project, sub, runname, ses=None, epi_space="MNI152NLin2009cAsym"):
     import nibabel as nib
     info = get_full_info(Project)
     if isWSL():
@@ -737,57 +748,83 @@ def sc_dt_hp_sm(Project, sub, runname, ses=None):
         return "Change to WSL"
     if ses == None:
         file_path = os.path.join(file_path, "func")
+        input_fname = os.path.join(file_path, 
+                                   f"sub-{sub}_task-{runname}_space-{epi_space}_desc-DN.nii.gz")
     else:
         file_path = os.path.join(file_path, "ses-"+ses, "func")
+        input_fname = os.path.join(file_path, 
+                                   f"sub-{sub}_ses-{ses}_task-{runname}_space-{epi_space}_desc-DN.nii.gz")
 
-    input_fname = glob.glob(os.path.join(file_path, "*"+runname+".nii.gz"))[0]
+    
     mean_fname = input_fname.split(".nii.gz")[0] + '_mean.nii.gz'
     SC_fname = input_fname.split(".nii.gz")[0] + '_sc.nii.gz'
     DT_fname = input_fname.split(".nii.gz")[0] + '_sc_dt.nii.gz'
     HP_fname = input_fname.split(".nii.gz")[0] + '_sc_dt_hp.nii.gz'
     SM_HP_fname = input_fname.split(".nii.gz")[0] + '_sc_dt_hp_sm.nii.gz'
-    final_fname = input_fname.split(".nii.gz")[0] + '_final.nii.gz'
 
-    print_name = os.path.basename(input_fname).split("_nii.gz")[0]
+    print_name = os.path.basename(input_fname).split("_desc")[0]
 
     vox = nib.load(input_fname).header.get_zooms()[0]
     mni_path = __file__
     vox_str = "{:.1f}".format(vox)
-    mask_fname = os.path.abspath(os.path.join(mni_path, "..", '..', '_data_Atlas', 'MNI', "MNI_"+vox_str+"mm_mask.nii.gz"))
+    if epi_space == "MNI152NLin2009cAsym":
+        mask_fname = os.path.abspath(os.path.join(mni_path, "..", '..', '_data_Atlas', 'MNI', "MNI_"+vox_str+"mm_mask.nii.gz"))
+    elif epi_space == "T1w":
+        mask_fname = os.path.join(file_path,
+                                  f"sub-{sub}_ses-{ses}_task-{runname}_space-{epi_space}_desc-brain_mask.nii.gz")
+
 
     # Scaling
-    sp.call(f'3dTstat -prefix {mean_fname} {input_fname}', shell=True)
-    sp.call(f"3dcalc -a {input_fname} -b {mean_fname} -c {mask_fname} -expr 'c * min(200, a/b*100)*step(a)*step(b)' -prefix {SC_fname}",
+    sp.call(f'3dTstat -overwrite -prefix {mean_fname} {input_fname}', shell=True)
+    sp.call(f"3dcalc -overwrite -a {input_fname} -b {mean_fname} -c {mask_fname} -expr 'c * min(200, a/b*100)*step(a)*step(b)' -prefix {SC_fname}",
             shell=True)
     print("---------------------------------------------------------------------")
     print(print_name+" scaling finished")
     print("---------------------------------------------------------------------")
 
     # detrending
-    sp.call(f'3dDetrend -polort 1 -prefix {DT_fname} {SC_fname}', shell=True)
+    sp.call(f'3dDetrend -overwrite -polort 1 -prefix {DT_fname} {SC_fname}', shell=True)
     print("---------------------------------------------------------------------")
     print(print_name+" detrending finished")
     print("---------------------------------------------------------------------")
 
     # high-pass filtering
-    sp.call(f'3dBandpass -prefix {HP_fname} 0.01 99999 {DT_fname}', shell=True)
+    sp.call(f'3dBandpass -overwrite -prefix {HP_fname} 0.01 99999 {DT_fname}', shell=True)
     print("---------------------------------------------------------------------")
     print(print_name+" filtering finished")
     print("---------------------------------------------------------------------")
 
     # Spatial Smoothing
-    if vox == 1.5: FWHM = 2
-    elif vox == 2: FWHM = 3
-    elif vox == 2.5: FWHM = 4
+    if vox == 1.5: FWHM = 3
     elif vox == 3: FWHM = 5
     else: FWHM = vox
-    sp.call(f'3dmerge -quiet -1blur_fwhm {FWHM} -doall -prefix {SM_HP_fname} {HP_fname}', shell=True)
-    sp.call(f"cp {SM_HP_fname} {final_fname}", shell=True)
+    sp.call(f'3dmerge -overwrite -quiet -1blur_fwhm {FWHM} -doall -prefix {SM_HP_fname} {HP_fname}', shell=True)
     print("---------------------------------------------------------------------")
     print(print_name+" smoothing finished")
     print("---------------------------------------------------------------------")
+
+
+def delete_intermediate_files(Project, sub, runname, ses=None, epi_space="MNI152NLin2009cAsym"):
+    info = get_full_info(Project)
+    file_path = os.path.join(info['bids_path'], "derivatives", f"sub-{sub}")
+    if ses == None:
+        file_path = os.path.join(file_path, "func")
+        input_fname = os.path.join(file_path, 
+                                   f"sub-{sub}_task-{runname}_space-{epi_space}_desc-DN.nii.gz")
+    else:
+        file_path = os.path.join(file_path, "ses-"+ses, "func")
+        input_fname = os.path.join(file_path, 
+                                   f"sub-{sub}_ses-{ses}_task-{runname}_space-{epi_space}_desc-DN.nii.gz")
+
+    mean_fname = input_fname.split(".nii.gz")[0] + '_mean.nii.gz'
+    SC_fname = input_fname.split(".nii.gz")[0] + '_sc.nii.gz'
+    DT_fname = input_fname.split(".nii.gz")[0] + '_sc_dt.nii.gz'
+    if os.path.exists(mean_fname): os.remove(mean_fname)
+    if os.path.exists(SC_fname): os.remove(SC_fname)
+    if os.path.exists(DT_fname): os.remove(DT_fname)
     
     
+
 
 # SS MP2RAGE
 def MP2RAGE(Project, sub, output=None, ses=None, replace="03_UNI_SS.nii.gz"):

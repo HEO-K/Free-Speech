@@ -7,10 +7,10 @@ def good_subs(taskname, exception=[]):
 
     Args:
         taskname (str): 과제명 (TA, M, G, 3)
-            \- TA: think aloud
-            \- M: movie
-            \- G: game
-            \- 3: three topics
+            - TA: think aloud
+            - M: movie
+            - G: game
+            - 3: three topics
         exception (string list, optional): 예외 subject list. Defaults to [].
         
     Returns: [Project, sub, ses,task] list
@@ -18,25 +18,26 @@ def good_subs(taskname, exception=[]):
     
     if taskname == "TA":
         Project = "NatPAC_speech"
-        tasks = ["speechFREE_run-1"]
-        sess = [["01", "01R", "11", "11R"]]
-    elif taskname == "M":
-        Project = "NatPAC_speech"
-        tasks = ["speechMOVIE_run-1"]
-    elif taskname == "G":
-        Project = "NatPAC_speech"
-        tasks = ["speechMC_run-1"]   
+        task = "speechFREE_run-1"
+        ses = "01"
     elif taskname == "3": 
         Project = "NatPAC_speech"
-        tasks = ["speechTOPICS_run-1"] 
-        sess = [["10", "10R"]]
+        task = "speechTOPICS_run-1"
+        ses = "10"
+        
+        
     subs_info = []
-    for task, ses_list in zip(tasks, sess):
-        for ses in ses_list:
-            try:
-                subs_list = get_good_sub(Project, ses=ses,target_run=task)
-                for sub in subs_list:
-                    subs_info.append([Project, sub, ses, task])  
-            except: pass
-    return subs_info
-# %%
+    ses_list = [ses+"R", ses+"A", ses]
+    for ses in ses_list:
+        try:
+            subs_list = get_good_sub(Project, ses=ses,target_run=task)
+            for sub in subs_list:
+                subs_info.append([Project, sub, ses, task])  
+        except: pass
+    
+    # 예외 피험자
+    final_subs = []
+    for [Project, sub, ses, task] in subs_info:
+        if sub not in exception: final_subs.append([Project, sub, ses, task])
+    final_subs.sort()        
+    return final_subs
