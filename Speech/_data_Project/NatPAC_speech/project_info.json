@@ -20,7 +20,21 @@
             "modality": "bold"
         }
     ],
+    "ses-01A": [
+        {
+            "name": "speechFREE",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
     "ses-02": [
+        {
+            "name": "REST",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        },
         {
             "name": "speechMOVIE",
             "type": "func",
@@ -29,6 +43,12 @@
         }
     ],
     "ses-02R": [
+        {
+            "name": "REST",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        },
         {
             "name": "speechMOVIE",
             "type": "func",
@@ -100,6 +120,22 @@
             "modality": "bold"
         }
     ],
+    "ses-08A": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
+    "ses-08N": [
+        {
+            "name": "speechMC",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ],
     "ses-09": [
         {
             "name": "speechMOVIE",
@@ -122,6 +158,12 @@
             "type": "func",
             "runs": 1,
             "modality": "bold"
+        },
+        {
+            "name": "REST",
+            "type": "func",
+            "runs": [2],
+            "modality": "bold"
         }
     ],
     "ses-10R": [
@@ -129,6 +171,12 @@
             "name": "speechTOPICS",
             "type": "func",
             "runs": 1,
+            "modality": "bold"
+        },
+        {
+            "name": "REST",
+            "type": "func",
+            "runs": [2],
             "modality": "bold"
         }
     ],

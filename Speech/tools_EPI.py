@@ -4,15 +4,9 @@ import nibabel as nib
 import glob
 import os
 from . import load_project_info
+from .tools import isWSL   # 정의는 tools.py 한 곳에만 둔다 (예전엔 여기에 중복 정의돼 있었다)
 
 
-
-##############################################################################################
-# 리눅스인지 확인 
-def isWSL():
-    if os.getcwd()[0] == "/": return True
-    else: return False
-    
 # make epi path
 def get_epipath(Project, sub, taskname, ses=None, smooth=True, epi_space="MNI152NLin2009cAsym"):
     """ EPI path 불러오기
@@ -70,72 +64,50 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear', save=Fals
     import pandas as pd
     from scipy.stats import zscore
 
+    if confound_interp not in (False, "linear"):
+        raise ValueError(f"confound_interp must be False or 'linear' (got {confound_interp!r})")
+
     filepath = get_epipath(Project, sub, taskname, ses, smooth, epi_space)
-    if confound_interp == False:
-        npypath = filepath[:-7]+"_raw.npy"
-    else:
-        npypath = filepath[:-7]+"_"+confound_interp+".npy"
-    
-    
-    if save:
-        epi = np.array(nib.load(filepath).get_fdata())
-        
-        # shape info
-        fov = list(epi.shape[:-1])
-        tr = epi.shape[-1]
-        epi = epi.reshape(-1,tr)
-        # zscore
-        if zscoring:
-            epi = zscore(epi, axis=1)
-        
-        # interp
-        if not confound_interp == False:
-            confound = np.loadtxt(filepath.split('_space')[0]+"_desc-FDoutlier.txt", int)
-            for i in range(len(confound)):
-                if confound[i] == 1: epi[:,i] = np.nan
-            epi = pd.DataFrame(epi.T)
-            # method
-            if confound_interp == 'linear': 
-                epi=epi.interpolate()
-            epi = np.array(epi).T.reshape((-1,tr))
+    # 캐시 파일명은 결과에 영향을 주는 옵션을 전부 담는다.
+    # 기본 옵션(zscoring=True, float16)은 예전 이름(_raw / _linear)을 그대로 써서 기존 캐시가 유효하다.
+    tag = "raw" if confound_interp == False else confound_interp
+    if not zscoring:
+        tag += "_nozscore"
+    if np.dtype(dtype) != np.float16:
+        tag += "_" + np.dtype(dtype).name
+    npypath = filepath[:-7] + f"_{tag}.npy"
 
-        epi = epi.astype(dtype)
-        np.save(npypath, epi.reshape(fov+[tr]))
-        epi = epi.reshape(fov+[tr])
-    else:
-        try:   # npy존재
-            epi = np.load(npypath)
-            
+    if not save and os.path.exists(npypath):
+        try:
+            return np.load(npypath)
+        except (OSError, ValueError) as e:      # 손상된 npy 만 다시 만든다 (MemoryError 등은 그대로 올린다)
+            print(f"[loader] cache unreadable, rebuilding: {npypath} ({e})")
 
-        except:
-            epi = np.array(nib.load(filepath).get_fdata())
-            
-            # shape info
-            fov = list(epi.shape[:-1])
-            tr = epi.shape[-1]
-            epi = epi.reshape(-1,tr)
-            # zscore
-            if zscoring:
-                epi = zscore(epi, axis=1)
-            
-            # interp
-            if not confound_interp == False:
-                confound = np.loadtxt(filepath.split('_space')[0]+"_desc-FDoutlier.txt", int)
-                for i in range(len(confound)):
-                    if confound[i] == 1: epi[:,i] = np.nan
-                epi = pd.DataFrame(epi.T)
-                # method
-                if confound_interp == 'linear': 
-                    epi=epi.interpolate()
-                epi = np.array(epi).T.reshape((-1,tr))
+    epi = np.array(nib.load(filepath).get_fdata())
+    fov = list(epi.shape[:-1])
+    tr = epi.shape[-1]
+    epi = epi.reshape(-1, tr)
+    if zscoring:
+        epi = zscore(epi, axis=1)
+    if confound_interp == "linear":
+        confound = np.loadtxt(filepath.split('_space')[0] + "_desc-FDoutlier.txt", int)
+        epi[:, confound == 1] = np.nan
+        epi = pd.DataFrame(epi.T).interpolate().to_numpy().T
+    epi = epi.astype(dtype).reshape(fov + [tr])
 
-            epi = epi.astype(dtype)
-            np.save(npypath, epi.reshape(fov+[tr]))
-            epi = epi.reshape(fov+[tr])
+    tmp_path = npypath[:-4] + ".tmp.npy"       # 쓰다 죽어도 반쯤 쓰인 캐시가 남지 않게
+    np.save(tmp_path, epi)
+    os.replace(tmp_path, npypath)
 
 
     # return
     return(epi)
+
+
+def voxel_str(voxel):
+    """ 복셀 크기를 atlas 파일명 규약('3.0', '1.5')의 문자열로 정규화.
+    정본은 '3.0' 같은 텍스트지만 3, 3.0, '3' 도 같은 파일을 가리키게 한다 (예전엔 '3' 이 `_3mm` 을 찾아 죽었다). """
+    return f"{float(voxel):.1f}"
 
 
 # epi masking
@@ -144,15 +116,15 @@ def masking(epi, mask, mask_number=1):
 
     Args:
         epi (array): EPI array
-        mask (array or int): mask array 또는 MNI_복셀mm의 값
+        mask (array or str): mask array, 또는 복셀 크기('3.0') — 그 크기의 MNI brain mask 를 쓴다
         mask_number (int, optional): masking할 mask 값. Defaults to 1.
-        
-    Returns: 
+
+    Returns:
         2d masked array
     """
     # flatten
-    if type(mask) is int:
-        mask_data = get_MNI(mask)
+    if isinstance(mask, (str, int, float)):
+        mask_data = get_MNI(mask, option="mask")
     else:
         mask_data = np.array(mask)
     epi = np.array(epi)
@@ -164,7 +136,7 @@ def masking(epi, mask, mask_number=1):
 
 
 # get atlas information
-def get_atlas(name:str, size='3.0', mni_coordinates=False, get_info=True):
+def get_atlas(name:str, voxel='3.0', mni_coordinates=False, get_info=True):
     """ Atlas 정보와 그 파일 불러오기
 
     Args:
@@ -172,7 +144,7 @@ def get_atlas(name:str, size='3.0', mni_coordinates=False, get_info=True):
             - "Brainnetome"
             - "Schaefer2018_<N>Parcels_<7/17>Networks"
             - "Yeo2011_<7/17>Networks"
-        size (int, optional): 복셀 크기(mm). Defaults to 3mm.
+        voxel (str, optional): 복셀 크기(mm) 텍스트, '3.0' / '1.5'. Defaults to '3.0'.
         mni_coordinates (bool, optional): parcel의 MNI 좌표. Defaults to False.
 
     Returns: 
@@ -193,7 +165,7 @@ def get_atlas(name:str, size='3.0', mni_coordinates=False, get_info=True):
         coor_data = np.array(pd.read_csv(coor_file))
         coor_label = coor_data[:,0]
         
-    nii_file = glob.glob(os.path.join(file_base, name+"_"+str(size)+"mm.nii*"))[0]
+    nii_file = glob.glob(os.path.join(file_base, name+"_"+voxel_str(voxel)+"mm.nii*"))[0]
     data = np.array(nib.load(nii_file).get_fdata())
     
     if get_info:
@@ -215,11 +187,11 @@ def get_atlas(name:str, size='3.0', mni_coordinates=False, get_info=True):
 
 
 # MNI 불러오기
-def get_MNI(voxel_size, option=None, name="MNI"):
+def get_MNI(voxel, option=None, name="MNI"):
     """ MNI 데이터 불러오기
 
     Args:
-        voxel_size (str): 복셀 크기.
+        voxel (str): 복셀 크기(mm) 텍스트, '3.0' / '1.5'.
         option (str, optional): 옵션. Defaults to None.
             - "mask": brain mask
             - "wm": white matter
@@ -230,8 +202,8 @@ def get_MNI(voxel_size, option=None, name="MNI"):
     Returns: 
         MNI array
     """
-    mni_filename = name+"_"+str(voxel_size)+"mm"
-    if option!=None: 
+    mni_filename = name+"_"+voxel_str(voxel)+"mm"
+    if option!=None:
         mni_filename = mni_filename+"_"+str(option)
     base = os.path.dirname(__file__)
     mni_path = glob.glob(os.path.join(base, "_data_Atlas", name, mni_filename+".nii.gz"))[0]
@@ -241,7 +213,7 @@ def get_MNI(voxel_size, option=None, name="MNI"):
 
 
 # atlas averaging
-def parcel_averaging(parcel, epi, size='3.0'):
+def parcel_averaging(parcel, epi, voxel='3.0'):
     """ 각 parcel별 평균 timeseries
 
     Args:
@@ -250,14 +222,14 @@ def parcel_averaging(parcel, epi, size='3.0'):
             - result of get_atlas [info, data], info를 기준으로 평균.
             - atlas array, 존재하는 모든 수의 평균값을 구한다.
         epi(array): (x,y,z,t) or (v,t) array
-        size (number, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm). Defaults to 3mm.
+        voxel (str, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm) 텍스트. Defaults to '3.0'.
 
-    Returns: 
+    Returns:
         (parcel,t) array
     """
     # load parcel
     if type(parcel) == str:
-        [info, data] = get_atlas(parcel, size=size)
+        [info, data] = get_atlas(parcel, voxel=voxel)
         numbers = np.array(info[:,0], int)
     else:
         if type(parcel) == list:
@@ -268,8 +240,10 @@ def parcel_averaging(parcel, epi, size='3.0'):
             data = np.nan_to_num(parcel)
             numbers = list(set(list(data.reshape(-1)))-{0})
     data = np.array(data, int)
-    # load epi
-    epi = np.array(epi)
+    # load epi — float16 (loader 기본) 은 누적 오차가 커서 평균 전에 float32 로 올린다
+    epi = np.asarray(epi)
+    if epi.dtype == np.float16:
+        epi = epi.astype(np.float32)
     epi = epi.reshape(list(data.shape)+[epi.shape[-1]])
     # averaging
     avg_parcel = []
@@ -279,7 +253,7 @@ def parcel_averaging(parcel, epi, size='3.0'):
     return(np.array(avg_parcel))
 
 
-def get_parcel_roi_mask(parcel, roi, size="3.0"):
+def get_parcel_roi_mask(parcel, roi, voxel="3.0"):
     """
     Parcel에서 roi mask 불러오기
 
@@ -289,15 +263,15 @@ def get_parcel_roi_mask(parcel, roi, size="3.0"):
             - result of get_atlas [info, data], info를 기준으로 평균.
             - atlas array
         roi: roi index의 list 또는 숫자.
-        size (number, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm). Defaults to 3mm.
+        voxel (str, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm) 텍스트. Defaults to '3.0'.
 
-    Returns: 
+    Returns:
         Mask of roi (boolean array)
-        
+
     """
     # load parcel
     if type(parcel) == str:
-        [info, data] = get_atlas(parcel, size)
+        [info, data] = get_atlas(parcel, voxel)
         numbers = np.array(info[:,0], int)
     else:
         if len(parcel) == 2:
@@ -319,26 +293,25 @@ def get_parcel_roi_mask(parcel, roi, size="3.0"):
     return mask.astype(bool)      
         
         
-def network_cluster(parcel, epi, size='3', averaging=False):
+def network_cluster(parcel, epi, voxel='3.0', averaging=False):
     """ Yeo network별로 epi를 나눈 딕셔너리
 
     Args:
         parcel: network name / [info, data]
-            - "Yeo2011_<7/17>Networks"
-            - "Schaefer2018_<N>Parcels_<7/17>Networks"
+            - "Schaefer2018_<N>Parcels_<7/17>Networks" (라벨이 `<7/17>Networks_LH_<Net>_...` 꼴이어야 한다)
             - [info, data]: results of get_atlas
         epi(array): (x,y,z,t) or (v,t) array
-        size (number, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm). Defaults to 3mm.
+        voxel (str, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm) 텍스트. Defaults to '3.0'.
         averaging (bool): 네트워크 평균 여부. Defaults to 1.
-        
+
 
     Returns: 네트워크 딕셔너리
         - dict("Network_Name") = (voxel,t)
         - 평균 시, dict("Network_Name") = (1,t)
     """
-    # load 
+    # load
     if type(parcel) == str:
-        info, data = get_atlas(parcel, size)
+        info, data = get_atlas(parcel, voxel)
     else:
         info, data = parcel
     numbers = np.array(info[:,0], int)
@@ -397,7 +370,7 @@ def get_network_info(parcel):
 
 
 
-def fill_parcel_value(parcel, value, roi="all", size='3.0'):
+def fill_parcel_value(parcel, value, roi="all", voxel='3.0'):
     """ Atlas에 특정 값 채우기, 외 영역은 NaN
 
     Args:
@@ -410,16 +383,16 @@ def fill_parcel_value(parcel, value, roi="all", size='3.0'):
             - int
             - index array (1부터 시작)
             - bool array
-        size: atlas voxel size. Defaults to '3.0'
+        voxel (str, optional): parcel을 이름으로 불러올 경우의 복셀 크기(mm) 텍스트. Defaults to '3.0'.
 
     Returns:
-        _type_: _description_
+        array: atlas 와 같은 shape, 채운 parcel 외는 NaN
     """
-    
-    
+
+
     # load parcel
     if type(parcel) == str:
-        [info, data] = get_atlas(parcel, size)
+        [info, data] = get_atlas(parcel, voxel)
         numbers = np.array(info[:,0], int)
     else:
         if len(parcel) == 2:
@@ -428,63 +401,60 @@ def fill_parcel_value(parcel, value, roi="all", size='3.0'):
             numbers = np.array(info[:,0], int)
         else:
             data = np.nan_to_num(parcel)
-            numbers = list(set(list(data.reshape(-1)))-{0})   
-             
-    brain = np.zeros_like(data)
-    brain[:] = np.nan
-    
-    if roi == 'all':
-        if len(value) == len(numbers):
-            for i in range(len(value)):
-                brain[data==i+1] = value[i]                
-        else:
-            num_value = len(value)
-            num_parcels = len(numbers)
-            raise Exception(f"Number of values({num_value}) is not matched with number of parcels({num_parcels})")
+            numbers = np.setdiff1d(np.unique(data), [0]).astype(int)
+    data = np.asarray(data)
+    brain = np.full(data.shape, np.nan)
+
+    # roi 해석 → (채울 parcel 번호, 값) 짝
+    #   'all'      : numbers 순서대로 (parcel 번호가 1..N 이 아니어도 된다)
+    #   int        : 그 parcel 하나, value 는 스칼라
+    #   bool array : get_atlas 순서(numbers)에 대한 마스크, 길이 = parcel 수, 값은 True 개수만큼
+    #                (Schaefer 처럼 번호가 1..N 이면 예전처럼 i 번째 True → parcel i+1)
+    #   index array: 그 번호들 (1부터). [1, 5, 6] 처럼 1 로 시작해도 bool 로 오인하지 않는다
+    numbers = np.asarray(numbers, int)
+    if isinstance(roi, str):
+        if roi != 'all':
+            raise ValueError(f"Unknown roi '{roi}' (use 'all', int, bool array, or index array)")
+        targets = numbers
+        what = "parcels"
     else:
-        if type(roi) == int:
-            try:
-                brain[data==roi] = value
-            except:
-                raise Exception(f"Roi-'{roi}' is not in atlas")
-        
-        if (roi[0]==True) or (roi[0]==False):
-            try:
-                n = 0
-                for i in range(len(roi)):
-                    if roi[i]: 
-                        brain[data==i+1] = value[n]
-                        n = n+1
-            except:
-                num_value = len(value)
-                num_parcels = np.sum(roi)
-                raise Exception(f"Number of values({num_value}) is not matched with number of rois({num_parcels})")                
+        roi = np.asarray(roi)
+        if roi.ndim == 0:
+            targets = np.array([int(roi)])
+        elif roi.dtype == bool:
+            if len(roi) != len(numbers):
+                raise ValueError(f"bool roi length({len(roi)}) != number of parcels({len(numbers)})")
+            targets = numbers[roi]
         else:
-            if len(value) == len(roi):
-                for i,n in enumerate(roi):
-                    brain[data==n] = value[i]
-            else:
-                num_value = len(value)
-                num_parcels = len(roi)
-                raise Exception(f"Number of values({num_value}) is not matched with number of rois({num_parcels})")
+            targets = roi.astype(int)
+        what = "rois"
+    values = np.atleast_1d(np.asarray(value, dtype=float))
+    if len(values) != len(targets):
+        raise ValueError(f"Number of values({len(values)}) is not matched with number of {what}({len(targets)})")
+
+    for t, v in zip(targets, values):
+        mask = data == t
+        if not mask.any():
+            raise ValueError(f"Roi-'{t}' is not in atlas")
+        brain[mask] = v
+
+    return brain
     
-    return brain    
-    
 
 
 
-def data_to_MNI_nifti(input, voxel_size='3.0'):
+def data_to_MNI_nifti(input, voxel='3.0'):
     """ MNI Nifti1Image 이미지화
-    
+
         Args:
             input (array) : input data, mni와 같은 크기여야 함
-            voxel_size (str, optional): 복셀 크기(mm). Defaults to '3.0'
-            
-        Returns: 
+            voxel (str, optional): 복셀 크기(mm) 텍스트. Defaults to '3.0'
+
+        Returns:
             Nifiti1Image
     """
-    
-    mni_filename = "MNI_"+voxel_size+"mm_mask"
+
+    mni_filename = "MNI_"+voxel_str(voxel)+"mm_mask"
     base = os.path.dirname(__file__)
     mni_path = glob.glob(os.path.join(base, "_data_Atlas", "MNI", mni_filename+"*"))[0]
     mni = nib.load(mni_path)
@@ -493,18 +463,18 @@ def data_to_MNI_nifti(input, voxel_size='3.0'):
     return input_nifti
 
 
-def data_to_MNI_nilearn(input, voxel_size='3.0'):
+def data_to_MNI_nilearn(input, voxel='3.0'):
     """ Nilearn 이미지화
-    
+
         Args:
             input (array) : input data, mni와 같은 크기여야 함
-            voxel_size (str, optional): 복셀 크기(mm). Defaults to '3.0'
-            
-        Returns: 
-            Nifiti1Image 
+            voxel (str, optional): 복셀 크기(mm) 텍스트. Defaults to '3.0'
+
+        Returns:
+            Nifiti1Image
     """
     from nilearn.image import new_img_like
-    nifti_img = data_to_MNI_nifti(input, voxel_size) 
+    nifti_img = data_to_MNI_nifti(input, voxel)
     epi_nilearn = new_img_like(nifti_img, nifti_img.get_fdata())
     return epi_nilearn
 # %%

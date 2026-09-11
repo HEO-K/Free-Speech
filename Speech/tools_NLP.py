@@ -5,6 +5,71 @@ import json
 import time
 from .tools import isWSL
 
+
+def _etri_access_key():
+    """ ETRI OpenAPI accessKey를 환경변수에서 읽는다.
+
+        코드에 키를 적어 두지 않기 위한 것이다. 사용자 환경변수에 한 번만
+        등록해 두면 이후로는 아무것도 입력할 필요가 없다.
+
+            ETRI_ACCESS_KEY : aiopen.etri.re.kr에서 발급받은 개인 accessKey
+
+        Windows에서 등록하는 법 (PowerShell, 한 번만 실행):
+            [Environment]::SetEnvironmentVariable('ETRI_ACCESS_KEY','<KEY>','User')
+
+        WSL에서도 쓰려면 Windows 사용자 환경변수 WSLENV에
+        'ETRI_ACCESS_KEY/u' 를 추가해 두면 그대로 전달된다.
+
+        Returns:
+            str: accessKey
+    """
+
+    key = os.environ.get("ETRI_ACCESS_KEY")
+    if not key:
+        raise RuntimeError(
+            "ETRI accessKey가 환경변수에 없습니다: ETRI_ACCESS_KEY\n"
+            "등록 방법은 Speech/tools_NLP.py의 _etri_access_key() "
+            "docstring을 참고하세요.\n"
+            "이미 등록했다면 VS Code나 터미널을 껐다 켜야 새 환경변수가 반영됩니다."
+        )
+    return key
+
+
+def _split_text(text, limit=5000):
+    """ ETRI 요청 한도(5000자)에 맞춰 텍스트를 문장(". ") 단위로 이어 붙인 덩어리 리스트로.
+    각 덩어리는 문장 경계에서만 끊기고, 마침표는 유지된다. """
+    text = text.strip()
+    if text.endswith("."): text = text[:-1]
+    chunks, cur = [], ""
+    for sent in text.split(". "):
+        piece = sent + ". "
+        if cur and len(cur) + len(piece) > limit:
+            chunks.append(cur.strip())
+            cur = ""
+        cur += piece
+    if cur.strip(): chunks.append(cur.strip())
+    return chunks
+
+
+def _etri_request(url, analysis_code, text):
+    """ ETRI OpenAPI 한 번 호출 → return_object['sentence'] 리스트. 실패하면 응답을 담아 RuntimeError.
+    (예전엔 print 만 하고 빈 결과를 정상처럼 돌려줬다 — 키 오류·쿼터 초과가 빈 태깅으로 둔갑했다) """
+    http = urllib3.PoolManager()
+    response = http.request(
+        "POST", url,
+        headers={"Content-Type": "application/json; charset=UTF-8", "Authorization": _etri_access_key()},
+        body=json.dumps({"argument": {"text": text, "analysis_code": analysis_code}}),
+    )
+    body = response.data.decode("utf-8")
+    try:
+        parsed = json.loads(body)
+        sentences = parsed["return_object"]["sentence"]
+    except (ValueError, KeyError, TypeError):
+        raise RuntimeError(f"ETRI {analysis_code} request failed (HTTP {response.status}): {body[:500]}")
+    time.sleep(0.2)     # 너무 빠르게 돌리면 오류뜸
+    return sentences
+
+
 def load_stopword(input_list=None):
     """ 불용어 불러오기
 
@@ -59,45 +124,12 @@ def etri_spokentagger(input, wordlevel=False, stopwords=True):
     
     
     openApiURL = "http://aiopen.etri.re.kr:8000/WiseNLU_spoken"
-    accessKey = "9d3f4f60-ac44-43c9-9ae4-a3df0ee86686"  # 개인 accessKey
-    analysisCode = "morp"
-    
-    
-    # 만약 글자수가 5000자 이상이면, 여러번 나눠서 해야 한다. 문장(온점, ". ") 단위로 쪼갠다.
-    input = input.strip()
-    if input[-1] == ".": input = input[:-1]
-    input_sent = input.split(". ")
-    sent_tmp = ''
-    input_split = []
-    for sent in input_sent:
-        if len(sent_tmp)+len(sent)>5000:
-            input_split.append(sent_tmp)
-            sent_tmp = sent+". "
-        else: sent_tmp = sent_tmp+sent+". "
-    input_split.append(sent_tmp)
-    
-    
-    results = []
-    for sent in input_sent:
-        requestJson = {
-        "argument": {
-            "text": sent,
-            "analysis_code": analysisCode
-            }
-        }
-        http = urllib3.PoolManager()
-        response = http.request(
-            "POST",
-            openApiURL,
-            headers={"Content-Type": "application/json; charset=UTF-8", "Authorization" :  accessKey},
-            body=json.dumps(requestJson)
-        )
 
-        response_results = response.data.decode('utf-8')
-        try:
-            results = results + json.loads(response_results)['return_object']['sentence']
-        except: print(json.loads(response_results))
-        time.sleep(0.2)
+    # 5000자 한도에 맞춘 덩어리마다 한 번씩 요청 (예전엔 덩어리를 만들어 놓고 문장마다 요청해
+    # 문장 수만큼 쿼터를 썼고, 각 문장이 마침표 없이 전송됐다)
+    results = []
+    for chunk in _split_text(input):
+        results += _etri_request(openApiURL, "morp", chunk)
     tagged_results = []
     
     
@@ -149,133 +181,14 @@ def etri_dparse(input):
     """
 
 
-    openApiURL = "http://aiopen.etri.re.kr:8000/WiseNLU" 
-    accessKey = "9d3f4f60-ac44-43c9-9ae4-a3df0ee86686"  # 개인 accessKey
-    analysisCode = "dparse"
+    openApiURL = "http://aiopen.etri.re.kr:8000/WiseNLU"
 
-
-    # 만약 글자수가 5000자 이상이면, 여러번 나눠서 해야 한다. 문장(온점, ". ") 단위로 쪼갠다.
-    input_sent = input.split(". ")
-    sent_tmp = ''
-    input_split = []
-    for sent in input_sent:
-        if len(sent_tmp)+len(sent)>5000:
-            input_split.append(sent_tmp)
-            sent_tmp = sent+". "
-        else: sent_tmp = sent_tmp+sent+". "
-    input_split.append(sent_tmp)
-    
-    
-    # 나눠진 문장마다 돌린다.
     results = []
-    for sent in input_sent:
-        requestJson = {
-        "argument": {
-            "text": sent,
-            "analysis_code": analysisCode
-            }
-        }
-        http = urllib3.PoolManager()
-        response = http.request(
-            "POST",
-            openApiURL,
-            headers={"Content-Type": "application/json; charset=UTF-8", "Authorization" :  accessKey},
-            body=json.dumps(requestJson)
-        )
+    for chunk in _split_text(input):
+        results += _etri_request(openApiURL, "dparse", chunk)
 
-        response_results = response.data.decode('utf-8')
-        try:
-            results = results + json.loads(response_results)['return_object']['sentence']
-        except: print(json.loads(response_results))
-        
-        # 너무 빠르게 돌리면 오류뜸
-        time.sleep(0.2)
-    
-    return results 
-
-
-
-
-
-# 키워드 추출 모델
-def keyword_extraction(model, input_lines:list, filtered_lines:list, 
-                    min_n:int, max_n:int, top_keywords:int, diversity=0.5,
-                     print_keywords=True):
-    """ 문장의 키워드 추출
-
-    Args:
-        input_lines (list): 원 문장의 리스트 ["문장", ...]
-        filtered_lines (list): 키워드를 구성할 때 사용할 형태소 리스트 ["형태소들",...]
-        min_n (int): 키워드(구)를 구성하는 최소 단어수
-        max_n (int): 키워드(구)를 구성하는 최대 단어수
-        top_keywords (int): 뽑을 키워드 개수
-        diversity (float, optional): MMR(다양한 키워드가 뽑히는 정도, 0~1). Default to 0.5
-
-    Returns:
-        list: 각 문장마다 [키워드, 스코어]
-    """
-    
-    from sklearn.feature_extraction.text import CountVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
-
-    
-    # 키워드 찾기
-    results = []
-    n_gram_range = (min_n, max_n)  # 키워드(구)를 만들 수 있는 단어 개수
-    key_embed = np.empty((0,768))
-    for i in range(len(filtered_lines)):
-        if len(filtered_lines[i]) == 0:
-            if print_keywords: print("no candidate, just return NO keyword")
-            result = []
-            for n in range(top_keywords):
-                result.append(["", 0])
-        else:
-            count = CountVectorizer(ngram_range=n_gram_range,token_pattern=r"(?u)\b\w+\b").fit([" ".join(set(filtered_lines[i]))])
-            candidates = count.get_feature_names_out()  # 모든 단어 조합 -> keyword candidate
-            doc_embedding = model.encode(input_lines[i])  # 원본 문장 embedding
-            candidate_embeddings = model.encode(candidates)   # keyword candidate embedding
-            word_doc_sim = cosine_similarity(candidate_embeddings,
-                                            doc_embedding.reshape(1,768))  # 키워드 후보 & 원문의 유사도
-            word_word_sim = cosine_similarity(candidate_embeddings)  # 키워드 후보 끼리의 유사도
-            
-            
-            # Maximum Limit Relegance로 키워드를 다양화
-            # top n개의 키워드를 쓰면 지나치게 유사한 키워드들만 추출된다.
-            keywords_idx = [np.argmax(word_doc_sim)]  # 최고의 키워드
-            # 위를 제외한 나머지
-            candidates_idx = [n for n in range(len(candidate_embeddings)) if n != keywords_idx[0]]
-            # 키워드-1 만큼 최고의 키워드 찾는 것 반복
-            for _ in range(top_keywords - 1):
-                try:
-                    candidate_similarities = word_doc_sim[candidates_idx, :]
-                    target_similarities = np.max(word_word_sim[candidates_idx][:, keywords_idx], axis=1)
-                    mmr = (1-diversity) * candidate_similarities - diversity * target_similarities.reshape(-1,1)
-                    mmr_idx = candidates_idx[np.argmax(mmr)]
-                    keywords_idx.append(mmr_idx)
-                    candidates_idx.remove(mmr_idx)
-                except:
-                    pass
-        
-            # 유사도 높은 top n개의 키워드
-            keyword = candidates[keywords_idx]
-            if print_keywords: print(keyword)
-            
-            
-            # 그 유사도 값
-            score = np.array(word_doc_sim[keywords_idx])
-            # score = score/(np.mean(score)*len(score))  # [1,1,3] -> [0.2,0.2,0.6]
-            
-            result = []
-            for n in range(top_keywords):
-                try: result.append([keyword[n], score[n][0]])
-                except: result.append(["", 0])
-                
-            
-
-        results.append(np.array(result, dtype='object'))
-        
-        
     return results
+
 
 
 def get_NSP(text, model_name='klue/bert-base', raw=False):

@@ -23,35 +23,64 @@ def get_full_info(Project):
 
 
 
+def run_numbers(run):
+    """ project_info 항목의 'runs' 를 run 번호 리스트로 정규화
+
+    'runs' 가 없으면 [] (run 라벨 없이 name 만 쓴다),
+    정수 n 이면 [1, ..., n] (구형 표기),
+    리스트면 그 번호 그대로 (예: [2] → run-2 만 존재).
+
+    Args:
+        run (dict): project_info.json 의 run 항목
+
+    Returns:
+        list[int]: run 번호
+    """
+
+    runs = run.get("runs")
+    if runs is None: return []
+    if isinstance(runs, int): return list(range(1, runs+1))
+    return [int(r) for r in runs]
+
+
+def expand_run_names(run_info, only_func=True, sep="_run-"):
+    """ 세션의 run 항목 리스트 → run 이름 리스트
+
+    Args:
+        run_info (list[dict]): project_info.json 의 세션 항목 (예: info["ses-01"])
+        only_func (bool, optional): func 만 남길지. Defaults to True.
+        sep (str, optional): name 과 번호 사이 구분자. Defaults to "_run-".
+
+    Returns:
+        list[str]: 'name_run-N' (runs 없으면 'name')
+    """
+
+    runnames = []
+    for run in run_info:
+        if only_func and run.get("type") != "func": continue
+        nums = run_numbers(run)
+        if nums: runnames += [f"{run['name']}{sep}{i}" for i in nums]
+        else: runnames.append(run["name"])
+    return runnames
+
+
 def get_run_names(Project, ses=None, only_func=True):
     """ Run 이름 생성기
-    
+
     Args:
         Project (str): 프로젝트 이름
         ses (str, optional): 세션 번호, Defaults to None.
+        only_func (bool, optional): func 만 남길지. Defaults to True.
 
     Returns:
         list: 모든 run 리스트
     """
-       
+
     info = get_full_info(Project)
     if ses == None: run_info = info['info']
-    else: run_info = info["ses-"+ses]  
-    runnames = []
-    for run in run_info:
-        if only_func:
-            if run['type'] == 'func':
-                if 'runs' in run.keys():
-                    for i in range(1, run["runs"]+1):
-                        runnames.append(run["name"]+"_run-"+str(i))
-                else: runnames.append(run["name"])
-        else:
-            if 'runs' in run.keys():
-                for i in range(1, run["runs"]+1):
-                    runnames.append(run["name"]+"_run-"+str(i))
-            else: runnames.append(run["name"])     
-    
-    return runnames
+    else: run_info = info["ses-"+ses]
+
+    return expand_run_names(run_info, only_func=only_func)
 
 
 def get_good_sub(Project, ses=None, target_run=None):
@@ -79,15 +108,13 @@ def get_good_sub(Project, ses=None, target_run=None):
     
     if target_run == None:
         return(info)
-    else:
-        try:
-            return(info[target_run])
-        except:
-            msg = "Run "+target_run+" isn't exist. (Exist runs: "
-            for name in info.keys():
-                msg = msg+"'"+ name + "', "
-            msg = msg[:-2] + ")"
-            print(msg)
+    if target_run not in info:
+        # 예전엔 print 만 하고 None 을 돌려줘 호출자가 for sub in None 으로 죽거나
+        # bare except 로 삼켜 빈 목록이 됐다. 없는 run 은 KeyError 로 알린다.
+        exist = ", ".join(f"'{name}'" for name in info.keys())
+        raise KeyError(f"Run '{target_run}' isn't in good_sub.json of {Project}"
+                       f"{'' if ses is None else ' ses-'+str(ses)}. (Exist runs: {exist})")
+    return(info[target_run])
             
 
 

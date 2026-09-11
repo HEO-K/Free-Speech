@@ -244,102 +244,40 @@ def hrf_convolution(y, TR, sample=1, method="glover"):
     return(y_new)
 
 
-def eventseg_HMM(data, N, add_edge=True, scoring="diff"):
-    """ HMM event segmentation from Baldassano et al. (2017).
+def glm(input, X, apply_hrf=True, tr=1000, intercept=True, **kwargs):
+    """ General linear model
 
     Args:
-        data ([unit, time] array): input data
-        N: number of events
-        add_edge: include edge(0,end) at boundaries
-        scoring (str): scoring method, default is diff
-            - diff: (within - across)
-            - ratio: (within+1) / (across+1)
-            - original: (t==t+5) - (t!=t+5), from Baldassano et al. (2017)
-        
-    Returns:
-        [boundaries, score]
-    """
-    
-    import brainiak.eventseg.event
-    TRs = data.shape[1]
-    hmm_sim = brainiak.eventseg.event.EventSegment(N)
-    hmm_sim.fit(data.T)
-    
-    
-    bounds = np.where(np.diff(np.argmax(hmm_sim.segments_[0], axis=1)))[0]
-    bounds_all = [0] + list(bounds) + [TRs]
-    
-    # score (within ev VS across ev)
-    corrmat = np.corrcoef(data.T)
-    within_mask = np.zeros_like(corrmat)
-    for i in range(len(bounds_all)-1):
-        within_mask[bounds_all[i]:bounds_all[i+1],bounds_all[i]:bounds_all[i+1]] = 1
-    within_mask = np.triu(within_mask, k=1)
-    across_mask = np.zeros_like(corrmat)
-    for i in range(len(bounds_all)-2):
-        across_mask[bounds_all[i]:bounds_all[i+1],bounds_all[i+1]:bounds_all[i+2]] = 1
-    across_mask = np.triu(across_mask, k=1)
-    
-    if scoring == "diff":
-        score = np.mean(corrmat[within_mask==1])-np.mean(corrmat[across_mask==1])
-        score = score
-    elif scoring == "ratio":
-        score = (np.mean(corrmat[within_mask==1])+1)/(np.mean(corrmat[across_mask==1])+1)
-    elif scoring == "original":
-        events = np.argmax(hmm_sim.segments_[0], axis=1)
-        corrs = np.diag(corrmat, 5)
-        within = corrs[events[:-5] == events[5:]].mean()
-        across = corrs[events[:-5] != events[5:]].mean()
-        score = within-across
-        
-        
-    else:
-        raise NameError('Unknown scoring method ("diff", "ratio", "original")')
-    
-    if add_edge: return([bounds_all,score])
-    else: return([bounds,score])
-    
-    
-    
-def glm(input, X, apply_hrf=True, tr=1000, **kwargs):
-    """ General linear model 
-
-    Args:
-        input (array): Input [voxel, times]
-        X (array): Design matrix [condition, times]
+        input (array): Input [voxel, times] (1d 면 voxel 1개로 본다)
+        X (array): Design matrix [condition, times] (1d 면 condition 1개)
         apply_hrf (bool, optional): Apply hrf at X. Defaults to True.
         tr (int, optional): tr (ms). Defaults to 1000.
+        intercept (bool, optional): 설계행렬에 상수항을 넣을지. Defaults to True.
+            False 면 예전처럼 상수항 없이 푼다 — 입력과 HRF 회귀자가 모두 시간축 평균 0 일 때만
+            True 와 같다 (입력만 z-score 해도 boxcar 회귀자 평균이 0 이 아니라 값이 달라진다).
+        **kwargs: hrf_convolution 에 그대로 전달 (sample, method)
 
     Returns:
-        Array: [condition, voxel]
+        Array: [condition, voxel] — 상수항 beta 는 돌려주지 않는다
     """
-    
-    input = np.array(input).astype("float32")
-    try:
-        _, times = input.shape
-    except:
-        times = len(input)
-        input = input.reshape(1, times)
-    
-    X = np.array(X)
-    try:
-        n, times = X.shape
-    except:
-        times = len(X)
-        X = X.reshape(1,times)
-        n = 1
-    
+
+    input = np.atleast_2d(np.asarray(input, dtype="float64"))   # [voxel, times]
+    X = np.atleast_2d(np.asarray(X, dtype="float64"))           # [condition, times]
+    if input.shape[1] != X.shape[1]:
+        raise ValueError(f"input times ({input.shape[1]}) != X times ({X.shape[1]})")
+    n = X.shape[0]
+
     if apply_hrf:
-        X_hrf = []
-        for i in range(n):
-            X_hrf.append(hrf_convolution(X[i,:],tr/1000, **kwargs))
-        X_hrf = np.array(X_hrf).astype("float32").T
+        X_hrf = np.array([hrf_convolution(X[i,:], tr/1000, **kwargs) for i in range(n)]).T
     else:
-        X_hrf = np.array(X).astype("float32").T
-        
-    
-    betas = np.dot(np.dot(np.linalg.pinv(np.dot(X_hrf.T, X_hrf)), X_hrf.T), input.T)
-    return betas
+        X_hrf = X.T                                              # [times, condition]
+
+    if intercept:
+        X_hrf = np.column_stack([X_hrf, np.ones(X_hrf.shape[0])])
+
+    # pinv(X) @ y — pinv(XᵀX)Xᵀ 보다 조건수가 낫다
+    betas = np.linalg.pinv(X_hrf) @ input.T                      # [condition(+1), voxel]
+    return betas[:n]
 
 def empirical_p_value(actual_score, permuted_scores, alternative="two-sided"):
     """ Calculate empirical p-value from permutation test

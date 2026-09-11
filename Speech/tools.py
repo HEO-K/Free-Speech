@@ -1,18 +1,42 @@
 import os
+import sys
 import numpy as np
 import subprocess
 
 
 def isWSL():
-    """ WSL환경인지 확인
+    """ POSIX(WSL·Linux) 환경인지 확인
 
-    Returns: 
+        이름은 WSL이지만 실제로 구분하는 것은 "Windows가 아닌가"이다.
+        호출부는 모두 이 의미로 쓴다 — bids_path와 bids_path_window 중 고르기,
+        경로 구분자, pycortex import 여부, 서버 전용 명령 차단 등.
+
+    Returns:
+        bool: Windows면 False, 그 외(WSL·Linux·macOS)면 True
+    """
+
+    return sys.platform != "win32"
+
+
+def isRealWSL():
+    """ 순수 Linux가 아니라 진짜 WSL 위인지 확인
+
+        isWSL()은 Windows인지만 가른다. WSL과 네이티브 Linux를
+        구별해야 할 때만 이 함수를 쓴다.
+
+    Returns:
         bool
     """
-    
-    now = os.getcwd()
-    if now[0] == "/": return(True)
-    else: return(False)
+
+    if sys.platform != "linux":
+        return False
+    if os.environ.get("WSL_DISTRO_NAME"):
+        return True
+    try:
+        with open("/proc/version", "r") as f:
+            return "microsoft" in f.read().lower()
+    except OSError:
+        return False
     
 
 def get_path_from_bashrc():

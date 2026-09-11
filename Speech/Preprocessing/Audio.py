@@ -5,6 +5,44 @@ import numpy as np
 import os
 import warnings
 
+
+def _clova_credentials():
+    """ Clova Speech 접속 정보를 환경변수에서 읽는다.
+
+        코드에 키를 적어 두지 않기 위한 것이다. 사용자 환경변수에 한 번만
+        등록해 두면 이후로는 아무것도 입력할 필요가 없다.
+
+            CLOVA_INVOKE_URL : https://clovaspeech-gw.ncloud.com/external/v1/... 형태의 호출 URL
+            CLOVA_SECRET     : X-CLOVASPEECH-API-KEY 값
+
+        Windows에서 등록하는 법 (PowerShell, 한 번만 실행):
+            [Environment]::SetEnvironmentVariable('CLOVA_INVOKE_URL','<URL>','User')
+            [Environment]::SetEnvironmentVariable('CLOVA_SECRET','<KEY>','User')
+
+        WSL에서도 쓰려면 Windows 사용자 환경변수 WSLENV에
+        'CLOVA_INVOKE_URL/u:CLOVA_SECRET/u' 를 추가해 두면 그대로 전달된다.
+
+        Returns:
+            (invoke_url, secret) 튜플
+    """
+
+    invoke_url = os.environ.get("CLOVA_INVOKE_URL")
+    secret = os.environ.get("CLOVA_SECRET")
+
+    missing = [name for name, value in
+               [("CLOVA_INVOKE_URL", invoke_url), ("CLOVA_SECRET", secret)]
+               if not value]
+    if missing:
+        raise RuntimeError(
+            "Clova 접속 정보가 환경변수에 없습니다: " + ", ".join(missing) + "\n"
+            "등록 방법은 Speech/Preprocessing/Audio.py의 _clova_credentials() "
+            "docstring을 참고하세요.\n"
+            "이미 등록했다면 VS Code나 터미널을 껐다 켜야 새 환경변수가 반영됩니다."
+        )
+
+    return invoke_url.rstrip("/"), secret
+
+
 # STT
 def Clova_STT(file_path, lang="ko-KR", output="", save_STT=False, save_confidence=False, save_csv=False, save_speaker=False, showresults=False):
     """ 오디오 파일의 받아쓰기 결과(_STT.txt) & 단어 정렬 결과(_FA.txt) 저장
@@ -19,8 +57,7 @@ def Clova_STT(file_path, lang="ko-KR", output="", save_STT=False, save_confidenc
             showresults: 결과 출력 여부 (default: False)
     """
     
-    invoke_url = 'https://clovaspeech-gw.ncloud.com/external/v1/2227/2752bda02f64f65c39aef44ddfe935dd3a6a7c9c061e687484f67707ee3f975c'
-    secret = '03bbf8f1bea54866bbd108c26845160e'            
+    invoke_url, secret = _clova_credentials()
     request_body = {
         'language': lang,
         'completion': 'sync',
@@ -218,8 +255,7 @@ def Clova_confidence(file_path, lang="ko-KR"):
             file_path (str): 오디오 파일 경로
     """
     
-    invoke_url = 'Clova URL'
-    secret = 'Clova secret key'          
+    invoke_url, secret = _clova_credentials()
     request_body = {
         'language': lang,
         'completion': 'sync',

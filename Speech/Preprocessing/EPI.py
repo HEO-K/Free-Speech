@@ -5,7 +5,7 @@ import glob
 import json
 import pandas as pd
 import subprocess as sp
-from Speech.load_project_info import get_full_info,get_brain_path
+from Speech.load_project_info import get_full_info,get_brain_path,run_numbers,expand_run_names
 import zipfile
 import re
 from Speech.tools import isWSL
@@ -48,14 +48,10 @@ def check_dcm(Project, input_path, ses = None):
         runname = run["name"]
         # func
         if run["type"] == "func":
-            try:
-                runs = run["runs"]
-                for i in range(runs):
-                    target_runs.append(runname+str(i+1))
-                    target_runs_data[runname+str(i+1)] = run
-            except:
-                target_runs.append(runname)
-                target_runs_data[runname] = run
+            # runs 가 정수면 1..n, 리스트면 그 번호만 (스캐너 프로토콜명 NAME2 등과 맞춘다)
+            for name in expand_run_names([run], only_func=False, sep=""):
+                target_runs.append(name)
+                target_runs_data[name] = run
         # anat
         elif run["type"] == "anat":
             if run["modality"] == "T1w": 
@@ -509,12 +505,7 @@ def save_motion(Project, sub, ses=None, threshold=0.05):
     else:
         run_info = info["ses-"+ses]  
         func_path = os.path.join(sub_path, "ses-"+ses, "func")
-    runnames = []
-    for run in run_info:
-        if 'runs' in run.keys():
-            for i in range(1, run["runs"]+1):
-                runnames.append(run["name"]+"_run-"+str(i))
-        else: runnames.append(run["name"])
+    runnames = expand_run_names(run_info, only_func=False)
 
     # 존재하는 파일만 사용한다.
     files = []
@@ -553,22 +544,20 @@ def save_motion(Project, sub, ses=None, threshold=0.05):
             good_sub_path = os.path.join(good_sub_path, "_data_Project", Project, "good_sub.json")
             if ses == None: ses_index = "info"
             else: ses_index = "ses-"+ses
-            try:
-                with open(good_sub_path) as f:
+            # 기존 파일은 그대로 두고 이 세션·run 항목만 갱신한다.
+            # 파일이 없을 때만 새로 만들고, 깨진 JSON 은 덮어쓰지 않고 에러를 낸다
+            # (예전엔 세션 키가 없어도 except 로 빠져 다른 run 의 good sub 를 전부 지웠다).
+            if os.path.exists(good_sub_path):
+                with open(good_sub_path, encoding="utf-8") as f:
                     good_sub = json.load(f)
-
-                if task in good_sub[ses_index].keys():
-                    if sub not in good_sub[ses_index][task]: good_sub[ses_index][task].append(sub)
-                else:
-                    good_sub[ses_index][task] = [sub]
-                f.close()
-            except:
+            else:
                 good_sub = dict()
-                good_sub[ses_index] = dict()
-                good_sub[ses_index][task] = [sub]
-            with open(good_sub_path, "w", encoding="utf-8") as f:
+            subs = good_sub.setdefault(ses_index, dict()).setdefault(task, [])
+            if sub not in subs: subs.append(sub)
+            tmp_path = good_sub_path + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(good_sub, f, indent=4)
-            f.close()
+            os.replace(tmp_path, good_sub_path)
 
         # save plot
         plt.subplot(len(files), 3, 1+3*i)
@@ -651,24 +640,19 @@ def save_tsnr(Project, sub, ses=None, epi_space="MNI152NLin2009cAsym"):
     else:
         run_info = info["ses-"+ses]  
         func_path = os.path.join(sub_path, "ses-"+ses, "func")
-    runnames = []
-    for run in run_info:
-        if 'runs' in run.keys():
-            for i in range(1, run["runs"]+1):
-                runnames.append(run["name"]+"_run-"+str(i))
-        else: runnames.append(run["name"])
+    runnames = expand_run_names(run_info, only_func=False)
 
     # 존재하는 파일만 사용한다.
     files = []
     for name in runnames:
-        file_path = glob.glob(os.path.join(func_path, 
+        file_path = glob.glob(os.path.join(func_path,
                                            "*"+name+f"*space-{epi_space}_desc-preproc_bold.nii.gz"))
         if len(file_path)>0: files.append(file_path[0])
     
     # Yeo network에 들어오는 값만 사용한다.
     vox = str(nib.load(files[0]).header.get_zooms()[0])
     from Speech.tools_EPI import get_atlas
-    atlas = get_atlas("Yeo2011_7Networks_tight", size=vox)[1]
+    atlas = get_atlas("Yeo2011_7Networks_tight", voxel=vox)[1]
     mask = atlas>0
     
     

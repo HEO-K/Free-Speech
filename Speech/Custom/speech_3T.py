@@ -119,7 +119,7 @@ def load_think_transition(Project, sub, tr=1000):
 
 
 
-def load_roi(name, output="mask", vox="3.0"):
+def load_roi(name, output="mask", voxel="3.0"):
     roi_list={
         "HPC": ["Brainnetome", [215,216,217,218],],
         "PCN": ["Schaefer2018_400Parcels_17Networks", [144,145,146,147,148,351,352,353,354,355,356,357]],
@@ -134,7 +134,7 @@ def load_roi(name, output="mask", vox="3.0"):
     }
     
     from Speech.tools_EPI import get_parcel_roi_mask
-    roi_mask = get_parcel_roi_mask(roi_list[name][0], roi_list[name][1], size=vox)
+    roi_mask = get_parcel_roi_mask(roi_list[name][0], roi_list[name][1], voxel=voxel)
     
     if output=="mask": return(roi_mask)
     elif output=="all": return([roi_mask, roi_list[name]])

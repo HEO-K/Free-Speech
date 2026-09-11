@@ -1,0 +1,23 @@
+{
+    "Name": "NatPAC_speech",
+    "bids_path": "/mnt/e/NatPAC/_DATA_fMRI",
+    "bids_path_window": "E:/NatPAC/_DATA_fMRI",
+    "audio_path": "/mnt/e/NatPAC/_DATA_Audio",
+    "audio_path_window": "E:/NatPAC/_DATA_Audio",
+    "ses-02": [
+        {
+            "name": "movieGUEST",
+            "type": "func",
+            "runs": 2,
+            "modality": "bold"
+        }
+    ],
+    "ses-02R": [
+        {
+            "name": "movieGUEST",
+            "type": "func",
+            "runs": 1,
+            "modality": "bold"
+        }
+    ]
+}

@@ -44,10 +44,11 @@ for key in ses_info:
             types = input(f"{name}의 종류를 입력하세요 (anat, fmap, func).")
             runinfo["type"] = types
             if types.strip() == "func":
-                runs = input(f"{name}의 개수를 입력하세요. 1개 이상일 경우 run라벨이 붙습니다.")
+                runs = input(f"{name}의 runs 를 입력하세요. 정수 n 이면 run-1~n, 리스트(예: [2], [1, 3])면 그 번호만 run 라벨이 붙습니다. 없으면 엔터")
                 try:
-                    runs = int(runs)
-                    if runs>0: runinfo["runs"] = runs
+                    runs = json.loads(runs)
+                    if isinstance(runs, int) and runs > 0: runinfo["runs"] = runs
+                    elif isinstance(runs, list) and len(runs) > 0: runinfo["runs"] = [int(r) for r in runs]
                 except: pass
             modality = input(f"{name}의 모달리티를 입력하세요. 예시 | EPI: bold | T1: T1w | GRE: phase, magnitude 각각 런 있어야 함 | MP2RAGE: MP2RAGE, UNI는 UNIT1 | topup용 반대 dir: epi")
             if len(modality.strip()) > 0: runinfo['modality'] = modality

@@ -18,15 +18,17 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1000, limi
             - long_pause: 길게 쉰 문장 종료
             - center: ev1 중심
         ses (str or int, optional): session number, Defaults to None.
-        tr (float, optional): TR (ms)
-        limiting (bool, optional): 주제와 중복되지 않는 silence, sentence. Defaults to True.
-        threshold (float, optional): silence 기준(초). Defaults to 3.5TR.
-        
+        tr (float, optional): 출력 단위 (ms). 1000 이면 초, 1600 이면 7T TR, 1 이면 ms 그대로
+        limiting (bool, optional): 주제 경계(ev1, ev2) ±3 초 안의 silence, sentence 는 뺀다. Defaults to True.
+        threshold (float, optional): silence / long_pause 기준 (초). Defaults to 3.5.
+            limiting 창과 threshold 는 tr 과 무관하게 초 단위로 고정이다
+            (예전엔 tr 단위라 tr=1 이면 ±3 ms, 3.5 ms 가 돼 아무것도 걸러지지 않았다).
 
-        
     Returns:
-       array: event boundary(초)
+       array: event boundary (tr 단위로 나눈 정수). sen_limited 에서 경계가 없으면 빈 배열
     """
+    LIMIT_MS = 3000                 # limiting 창 ±3 초
+    threshold_ms = threshold * 1000
     from . import load_project_info
     audio_path = load_project_info.get_audio_path(Project)
     audio_path = os.path.join(audio_path, "sub-"+sub)
@@ -63,7 +65,7 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1000, limi
         # 같은 것은 솎아내기
         sen_end = np.setdiff1d(sen_end, ev1_end)
         if len(sen_end) == 0:
-            return "no boundary"
+            return np.array([], int)
         elif len(sen_end) > len(ev1_end):
             # ev1의 침묵 시간
             ev1_sil = []
@@ -104,7 +106,7 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1000, limi
             except: pass
         sen_FA = np.array(sen_FA)
         for i in range(sen_FA.shape[0]-1):
-            if sen_FA[i+1,0]-sen_FA[i,1]>threshold*tr: ev.append(sen_FA[i,1])
+            if sen_FA[i+1,0]-sen_FA[i,1]>threshold_ms: ev.append(sen_FA[i,1])
         ev = np.array(np.array(ev)/tr, int)        
                  
     else:
@@ -122,8 +124,8 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1000, limi
                 ev[i] = ev[i].split(":")
             ev = np.array(ev)
             ev = np.array(ev, float)
-            ev = ev[ev[:,1]>threshold*tr,0]
-        
+            ev = ev[ev[:,1]>threshold_ms,0]
+
         elif boundary == 'center':
             ev = ev[ev.index("[1]\n")+1:ev.index("[2]\n")]
             ev = np.array(ev, float)
@@ -133,28 +135,20 @@ def load_audio_boundary(Project, sub, runname, boundary, ses=None, tr=1000, limi
             ev = center
                 
         
-        ev = (np.array(ev, float)/tr).astype(int)
-        
-        
-        if boundary == "silence" or boundary == "sentence":
-            if limiting:
-                with open(glob.glob(os.path.join(audio_path,"*"+runname+"_event.txt"))[0], 'r') as f:
-                    evs = f.readlines()
-                evs = list(filter(None, evs))
-                ev1 = evs[evs.index("[1]\n")+1:evs.index("[2]\n")]
-                ev1 = np.array(np.array(ev1, int)/tr, int)
-                ev2 = evs[evs.index("[2]\n")+1:]
-                ev2 = np.array(np.array(ev2, int)/tr, int)
+        ev_ms = np.array(ev, float)
 
-                
-                try:
-                    for i in range(-3,4):
-                        ev = np.setdiff1d(ev, ev1+i)
-                        ev = np.setdiff1d(ev, ev2+i)
-                except:
-                    print("there's no independent "+ boundary+". just return all")
-                    
-                ev.sort() 
+        if (boundary == "silence" or boundary == "sentence") and limiting:
+            # 주제 경계 ±LIMIT_MS 안의 경계는 뺀다 — tr 로 나누기 전에 ms 로 비교
+            with open(glob.glob(os.path.join(audio_path,"*"+runname+"_event.txt"))[0], 'r') as f:
+                evs = f.readlines()
+            evs = list(filter(None, evs))
+            topic_ms = np.array(evs[evs.index("[1]\n")+1:evs.index("[2]\n")]
+                                + evs[evs.index("[2]\n")+1:], float)
+            if len(topic_ms) > 0 and len(ev_ms) > 0:
+                near = np.abs(ev_ms[:, None] - topic_ms[None, :]).min(axis=1) <= LIMIT_MS
+                ev_ms = ev_ms[~near]
+
+        ev = np.unique((ev_ms/tr).astype(int))
         
            
     
@@ -177,26 +171,24 @@ def load_sentence(Project, sub, runname, ses=None):
         ses (str or int, optional): session number, Defaults to None.
         
     Returns:
-       list: 문장으로 이뤄져 있는 리스트
+       list: 문장 문자열 리스트. `*_STT_new.txt` 가 있으면 그 줄들, 없으면 `*_FA_new.txt` 의 단어를
+             `.` / `?` 로 끝나는 곳에서 끊어 만든 문장 (get_sentence_FA 와 같은 기준)
     """
     from . import load_project_info
     audio_path = load_project_info.get_audio_path(Project,derivatives=True)
     audio_path = os.path.join(audio_path, "sub-"+sub)
     if ses != None:
         audio_path = os.path.join(audio_path, "ses-"+str(ses))
-    
-    filename = f"*task-{runname}_STT_new.txt"
-    
-    try:
-        filepath = glob.glob(os.path.join(audio_path,filename))[0]
-    except:
-        return 
-    
-    with open(filepath, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    for i, line in enumerate(lines):
-        lines[i] = line.strip()
-    return lines
+
+    # 파일명이 두 형태(`..._run-1_STT_new.txt` / `..._run-1_desc-speak_audio_STT_new.txt`)라 느슨하게
+    files = glob.glob(os.path.join(audio_path, f"*task-{runname}*_STT_new.txt"))
+    if files:
+        with open(files[0], "r", encoding="utf-8") as f:
+            lines = [line.strip() for line in f.readlines()]
+        return [line for line in lines if line]
+
+    # STT 파일이 없으면 FA 에서 문장을 만든다
+    return [sen for _, _, sen in get_sentence_FA(Project, sub, runname, ses=ses)]
 
 
 def load_FA(Project, sub, runname, ses=None, TR=None):
@@ -207,11 +199,12 @@ def load_FA(Project, sub, runname, ses=None, TR=None):
         sub (str): sub number
         runname (str): task이름, ex) speechTOPIC_run-1
         ses (str or int, optional): session number, Defaults to None.
-        TR (int, optional): TR로 나눠진 TA, Defaults to None.
-        
+        TR (int, optional): TR 길이 (ms, 다른 함수의 tr 과 같은 단위 — 7T speech 는 1600).
+            주면 단어를 TR 구간별로 묶어 돌려준다. Defaults to None.
+
     Returns:
-        - TR=None의 경우: [start, end, word]의 리스트
-        - TR을 준 경우: 한 TR내 [word들]의 리스트
+        - TR=None의 경우: [start, end, word]의 리스트 (ms)
+        - TR을 준 경우: 한 TR내 [word들]의 리스트 (단어 시작 시각 기준, 0 부터 TR 간격)
     """
     
     from . import load_project_info
@@ -232,7 +225,7 @@ def load_FA(Project, sub, runname, ses=None, TR=None):
         time_and_word = line.split()
         times = [int(time_and_word[0]), int(time_and_word[1])]
         FA.append(times)
-        words.append(time_and_word[2])
+        words.append(" ".join(time_and_word[2:]))
     
     if TR == None:
         for i, word in enumerate(FA):
@@ -241,15 +234,13 @@ def load_FA(Project, sub, runname, ses=None, TR=None):
     
     else:
         words = np.array(words)
-        word_start = []
-        for t in FA:
-            word_start.append(t[0])
-        word_start = np.array(word_start)
+        word_start = np.array([t[0] for t in FA])
         FA_words = []
-        TRs = np.arange(0,np.max(FA)/1000+TR,TR)*1000
-        for i in range(len(TRs)-1):
-            FA_words.append(list(words[(word_start>=TRs[i])&(word_start<TRs[i+1])]))
-        return(FA_words)    
+        # TR 은 ms (예전엔 이 인자만 초 단위라 TR=1600 을 주면 bin 하나에 전부 들어갔다)
+        edges = np.arange(0, np.max(FA) + TR, TR)
+        for i in range(len(edges)-1):
+            FA_words.append(list(words[(word_start>=edges[i])&(word_start<edges[i+1])]))
+        return(FA_words)
 
 
 
@@ -326,7 +317,7 @@ def get_sentence_FA(Project, sub, runname, ses=None, only_timestamp=False, tr=10
     
     sen_FA = []
     for i in range(len(words)):
-        if words[i][-1] == ".":
+        if (words[i][-1] == ".") or (words[i][-1] == "?"):
             sen_FA.append([FA[s][0], FA[i][1], " ".join(words[s:i+1])])
             s = i+1
     if sen_FA[-1][1] != FA[-1][1]:

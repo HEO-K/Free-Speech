@@ -2,4 +2,4 @@
 # {your_path_of_anaconda}\anaconda3\envs\{env_name}\Lib\site-packages 위치에 이 파일을 복사
 
 
-Free-Speech/Speech    # 여기에는 /Free-Speech/Speech 폴더의 경로를 작성
+.../Free-Speech    # 여기에는 Speech라이브러리의 상위 폴더 경로를 작성
