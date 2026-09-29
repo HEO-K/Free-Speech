@@ -66,6 +66,15 @@ __2) 환경변수 (자격증명)__\
 [Environment]::SetEnvironmentVariable('ETRI_ACCESS_KEY','<KEY>','User')
 ```
 
+Clova 는 OS 와 무관하게 파이썬에서 한 번 등록할 수 있다 (Windows → 사용자 환경변수, Linux/WSL → `~/.bashrc` 의 `export` 줄).
+등록 없이 그때그때 쓰려면 `Clova_STT` / `Clova_confidence` 에 `invoke_url=`, `secret=` 을 넘긴다 (인자가 환경변수보다 우선).
+
+```python
+from Speech.Preprocessing import Audio
+Audio.set_clova_credentials("<URL>", "<KEY>", persist=True)   # persist=False 면 현재 세션에만
+Audio.Clova_STT(wav, invoke_url="<URL>", secret="<KEY>")      # 일회성
+```
+
 <br/>
 
 __3) 외부 의존__

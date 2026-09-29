@@ -95,9 +95,13 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear', save=Fals
         epi = pd.DataFrame(epi.T).interpolate().to_numpy().T
     epi = epi.astype(dtype).reshape(fov + [tr])
 
-    tmp_path = npypath[:-4] + ".tmp.npy"       # 쓰다 죽어도 반쯤 쓰인 캐시가 남지 않게
-    np.save(tmp_path, epi)
-    os.replace(tmp_path, npypath)
+    tmp_path = npypath[:-4] + f".{os.getpid()}.tmp.npy"   # 쓰다 죽어도 반쯤 쓰인 캐시가 남지 않게.
+    np.save(tmp_path, epi)                                # pid 를 붙여 여러 프로세스가 같은 run 을 동시에 캐시해도 안 겹친다
+    try:
+        os.replace(tmp_path, npypath)
+    except PermissionError:                               # 다른 프로세스가 방금 같은 캐시를 만들었다 — 그쪽 것을 쓴다
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
     # return
