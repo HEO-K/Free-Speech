@@ -1,7 +1,7 @@
 # Speech
-Free-Speech 실험의 python 모듈\
+Speech 실험의 python 모듈\
 프로젝트 등록(`_data_Project`) → 전처리(`Preprocessing`) → 분석 도구(`tools_*`) 순으로 쓴다.\
-리눅스(WSL)와 윈도우 양쪽에서 돌지만, AFNI·pycortex가 필요한 단계는 리눅스 전용이다.
+리눅스(WSL)와 윈도우 양쪽에서 돌지만, AFNI & pycortex가 필요한 단계는 리눅스 전용이다.
 <br/>
 <br/>
 
@@ -20,19 +20,19 @@ Free-Speech 실험의 python 모듈\
 ## 0. 전체 구성
 - [`load_project_info.py`](load_project_info.py): 프로젝트 레지스트리 읽기 — 경로·run·피험자 목록은 전부 여기서
 - [`make_project_info.py`](make_project_info.py): 새 프로젝트의 `project_info.json` 을 대화형으로 생성
-- [`tools.py`](tools.py): OS 판별(`isWSL`), 색 변환 등 공용 유틸
-- [`tools_EPI.py`](tools_EPI.py): EPI 로딩 · atlas · parcel 평균 · ROI mask
-- [`tools_Text.py`](tools_Text.py): 강제정렬(FA) · 문장 · 경계 · NSP · 문장 임베딩 로더
-- [`tools_Analysis.py`](tools_Analysis.py): HRF · GLM · 리샘플링 · permutation p 값 · 교차상관
-- [`tools_NLP.py`](tools_NLP.py): ETRI 형태소·의존구문 · BERT NSP · sentence-transformers 임베딩
-- [`tools_Plot.py`](tools_Plot.py): matplotlib 세팅 · surface plot · 별표 · 상관행렬
-- [`tools_Surface.py`](tools_Surface.py): 윈도우 용 surface 렌더링 백엔드(surfplot) — `tools_Plot` 이 자동 분기
-- [`Preprocessing/`](Preprocessing): `EPI.py`(dcm2bids · 디노이징 · AFNI 후처리), `Audio.py`(Clova STT · 강제정렬), 진입점 `dcm2bids_all.py` · `afterprep_all.py`
-- [`Custom/`](Custom): 프로젝트별 편의 함수 — `NatPAC_speech.py` `speech_3T.py` `I_AM_SOLO.py` `MonkeyKingdom_Monkey.py`
+- [`tools.py`](tools.py): 공용 유틸
+- [`tools_EPI.py`](tools_EPI.py): EPI 로딩 · atlas · parcel 평균 · ROI mask 등
+- [`tools_Text.py`](tools_Text.py): 강제정렬(FA) · 문장 · 경계 · NSP · 문장 임베딩 로더 등
+- [`tools_Analysis.py`](tools_Analysis.py): HRF · GLM · 리샘플링 · permutation p 값 · 교차상관 등
+- [`tools_NLP.py`](tools_NLP.py): ETRI 형태소·의존구문 · BERT NSP · sentence-transformers 임베딩 등
+- [`tools_Plot.py`](tools_Plot.py): surface plot · 별표 · 상관행렬 등
+- [`tools_Surface.py`](tools_Surface.py): 윈도우 용 surface 렌더링 백엔드
+- [`Preprocessing/`](Preprocessing): `EPI.py`(dcm2bids · 디노이징 · AFNI 후처리), `Audio.py`(Clova STT · 강제정렬)
+- [`Custom/`](Custom): 프로젝트별 편의 함수
 - [`_data_Project/`](_data_Project): 프로젝트 레지스트리 — `<Project>/project_info.json` + `good_sub.json`
-- [`_data_Atlas/`](_data_Atlas): MNI · Schaefer2018 · Yeo2011 · Brainnetome · HarvardOxford · Tian2020 · NMT(원숭이) · MEBRAIN08
-- [`_data_NLP/`](_data_NLP): `stopwords.txt` (`단어/품사`, 단어가 비면 품사 전체 제외)
-- [`set_wsl.py`](set_wsl.py): WSL 에서 `.bashrc` 적용 (거의 안 씀)
+- [`_data_Atlas/`](_data_Atlas): 모듈에서 쓸 atlas 저장소, 추가 가능
+- [`_data_NLP/`](_data_NLP): NLP 분석 중 필요한 파일 저장소
+- [`set_wsl.py`](set_wsl.py): WSL 에서 `.bashrc` 적용
 <br/>
 <br/>
 <br/>
@@ -44,9 +44,7 @@ __1) 모듈 경로__\
 ```
 # {anaconda}/envs/{env}/Lib/site-packages/FS_general.pth  (윈도우)
 # {anaconda}/envs/{env}/lib/python*/site-packages/FS_general.pth  (리눅스, WSL)
-D:/Functions
 ```
-스크립트 안에서 `sys.path` 를 건드리지 않는다. import 가 실패하면 대개 `.pth` 가 없는 환경(`base` 등)을 고른 것이다.
 
 <br/>
 
@@ -67,7 +65,7 @@ __2) 환경변수 (자격증명)__\
 ```
 
 Clova 는 OS 와 무관하게 파이썬에서 한 번 등록할 수 있다 (Windows → 사용자 환경변수, Linux/WSL → `~/.bashrc` 의 `export` 줄).
-등록 없이 그때그때 쓰려면 `Clova_STT` / `Clova_confidence` 에 `invoke_url=`, `secret=` 을 넘긴다 (인자가 환경변수보다 우선).
+등록 없이 그때그때 쓰려면 `Clova_STT` / `Clova_confidence` 에 `invoke_url=`, `secret=` 을 넘긴다.
 
 ```python
 from Speech.Preprocessing import Audio
@@ -81,22 +79,19 @@ __3) 외부 의존__
 
 | 단계 | 필요한 것 |
 | --- | --- |
-| `Preprocessing/EPI.py` 후처리(`sc_dt_hp_sm`) | AFNI (`3dTstat` `3dcalc` `3dDetrend` `3dBandpass` `3dmerge`), **리눅스 전용** |
-| `Preprocessing/EPI.py` `MP2RAGE` | FSL `bet` `fslmaths` + AFNI `3dSkullStrip`, 리눅스 전용 |
-| `Preprocessing/EPI.py` dcm2bids | `dcm2bids` |
-| `tools_NLP.get_NSP*` | tensorflow + transformers (`klue/bert-base`) |
-| `tools_NLP.get_sentence_embedding` | sentence-transformers |
-| `tools_Plot` surface | 리눅스: pycortex (DB `D:/Functions/pycortex/db`) / 윈동우: surfplot + 같은 DB 의 GIFTI |
-| 그 외 | numpy · scipy · pandas · nibabel · nilearn · sklearn · matplotlib |
+| `Preprocessing/EPI.py` | AFNI, FSL, dcm2bids (리눅스 전용) |
+| `tools_NLP` | tensorflow, transformers, sentence-transformers |
+| `tools_Plot` | 리눅스: pycortex (DB `D:/Functions/pycortex/db`) <br/> 윈도우: surfplot, pycortex DB의 GIFTI |
+| 그 외 | numpy, scipy, pandas, nibabel, nilearn, sklearn, matplotlib |
 
 <br/>
 <br/>
 <br/>
 
 ## 2. 프로젝트 등록
-**Project 는 폴더가 아니라 레지스트리 키다.** `_data_Project/<Project>/` 에 두 JSON 을 두면 모든 로더가 이름만으로 경로를 찾는다.
+**Project 는 폴더가 아니라 레지스트리 키다.** `_data_Project/<Project>/`에 프로젝트 정보를 적어 둔 JSON을 두면 모든 로더가 이름만으로 경로를 찾는다.
 
-__프로젝트 기본 정보 `project_info.json`__ — 데이터 루트 + 세션별 run 목록
+__프로젝트 기본 정보: `project_info.json`__
 ```json
 {
     "Name": "speech_3T",
@@ -113,23 +108,37 @@ __프로젝트 기본 정보 `project_info.json`__ — 데이터 루트 + 세션
     ]
 }
 ```
-- `root` 는 어느 OS 형식으로 적어도 된다 — `tools.native_path()` 가 `D:/…` ↔ `/mnt/d/…` 를 지금 OS 에 맞게 바꾼다. `paths` 는 `root` 상대경로.
-- `paths` 키: `rawdata`(BIDS raw) `fmriprep`(fMRIPrep + 후처리 → `get_brain_path`) `audio`(원본 wav → `get_audio_path(derivatives=False)`) `transcripts`(FA_new 등 정본 전사 → `get_audio_path`) `cache`(loader 의 `.npy` 캐시 폴더, 없으면 원본 파일 옆에 둔다 → `get_cache_path`). 로컬에 없는 데이터는 키를 빼면 `get_*_path` 가 `KeyError` 를 낸다.
-- 구형 스키마(`bids_path` `bids_path_window` `audio_path` `audio_path_window` 절대경로 네 개, fMRIPrep 은 `bids_path/derivatives` 고정)도 그대로 읽힌다. 신형을 읽을 때 구형 키는 배치가 옛 규약(`fmriprep` = `rawdata/derivatives` 등)과 같을 때만 채워지므로, 경로는 `info["bids_path"]` 를 직접 읽지 말고 `get_brain_path` `get_audio_path` `get_cache_path` 로 얻는다.
-- 세션이 없으면 `"info": [...]` 하나로 둔다 (`speech_3T` 가 그 예).
-- `runs` 는 정수 n(→ `run-1 … run-n`) 또는 리스트 `[2]`(→ `run-2` 만). 없으면 run 라벨 없이 `name` 만 쓴다.
-- `type` 은 `func` `anat` `fmap`, `modality` 는 dcm2bids 매칭용 (`bold` `T1w` `MP2RAGE` `phase` `magnitude` `epi`).
+- `"root"`: 프로젝트 경로. 어느 OS 형식으로 적어도 된다.
+- `"paths"`: 프로젝트 내 파일 경로 (`"root"` 하위의 상대경로)
+    - `"rawdata"`: BIDS raw 파일
+    - `"fmriprep"`: fMRIPrep 및 후처리 파일 
+    - `"audio"`: 원본 오디오 파일
+    - `"transcripts"`: 오디오 후처리 파일
+    - `"cache"`: EPI의 캐시 파일
+- `"ses-01"`: 실험 정보
+  - `"ses-XXX"`로 세션의 제목을 지정하고, `[]`에 각 세션의 정보를 적는다.
+  - 세션이 없으면 `"ses-XXX"` 대신 `"info"` 하나로 둔다.
+  - 각 run의 정보는 `{}`로 묶는다. (dcm2bids의 포맷을 따른다.)
+    - `type`은 `func` `anat` `fmap`
+    - `runs`는 정수 n(→ `run-1 … run-n`) 또는 리스트 `[2]`(→ `run-2` 만). 없으면 run 라벨 없이 `name` 만 쓴다.
+    - `modality`는 dcm2bids 매칭용 (`bold` `T1w` `MP2RAGE` `phase` `magnitude` `epi`).
 
-__레지스트리를 데이터셋 안에 두기 (redirect)__\
-`_data_Project/<Project>/project_info.json` 을 `{"redirect": "D:/speech_3T/registry/speech_3T"}` 한 줄로 두면 `project_info.json` 과 `good_sub.json` 을 그 폴더에서 읽고 쓴다(`get_project_dir`). 분석 대상 명세를 데이터와 같이 두기 위한 것으로, `speech_3T` 네 키가 이렇게 되어 있다.
+<br/>
 
-__`good_sub.json`__ — 분석 대상 피험자. `Preprocessing.EPI.save_motion` 이 FD>0.5 비율이 `threshold` 미만인 run 을 자동으로 추가한다.
+__레지스트리를 모듈이 아닌, 데이터셋 안에 두기 (redirect)__\
+`_data_Project/<Project>/project_info.json`을 `{"redirect": "redirect_path"}` 한 줄로 두면 `project_info.json`과 `good_sub.json` 을 그 폴더에서 읽고 쓴다(`get_project_dir`). 분석 대상 참여자 목록을 데이터와 같이 두기 위한 것.
+
+__`good_sub.json`__: 분석 대상 참여자. `Preprocessing.EPI.save_motion` 이 FD>0.5 비율이 `threshold` 미만인 run 을 자동으로 추가한다.
 ```json
 {"ses-01": {"speechFREE_run-1": ["003", "005"]}}
 ```
 
+<br/>
+
 __프로젝트 만들기__\
-[`make_project_info.py`](make_project_info.py) 의 상단 변수(`Project_name` `root` `paths`)를 고치고 실행하면 세션·run 을 물어보며 `<root>/registry/<Project>/project_info.json` 과 그곳을 가리키는 redirect 를 만든다. 직접 써도 된다.
+[`make_project_info.py`](make_project_info.py) 의 상단 변수(`Project_name`, `root`, `paths`)를 고치고 실행하면 세션과 run 을 물어보며 `<root>/registry/<Project>/project_info.json`과 그곳을 가리키는 redirect 를 만든다. 직접 써도 된다.
+
+<br/>
 
 __프로젝트 읽기__
 ```python
@@ -147,7 +156,7 @@ lp.get_audio_path("NatPAC_speech", derivatives=False)                       # ..
 모듈이 어떤 기능을 하고, 어떤 함수들이 있는지 설명한다.<br/>
 각 함수에 주석이 있으니 자세한 사용 방법은 주석을 참고하자.
 <br/>
-<br/>
+
 
 ### `tools_EPI` — EPI · atlas
 fMRI 데이터를 numpy array로 다루기 위한 함수들이 있다.
@@ -174,7 +183,7 @@ ts  = tools_EPI.parcel_averaging("Schaefer2018_400Parcels_17Networks", epi, voxe
 Atlas 이름은 `_data_Atlas/` 의 폴더명 그대로 사용한다.<br/>
 Atlas 불러오기 등 복셀 크기를 받아야 하는 경우, `voxel='3.0'`의 인자를 함수에 추가하면 된다. (없을 경우 `_data_Atlas/`에 직접 원하는 voxel size의 atlas를 만들어야 한다.) 
 
-<br/>
+
 <br/>
 
 ### `tools_Text` — 발화 텍스트 · 타임스탬프
@@ -191,25 +200,24 @@ Word timestamp등을 fMRI 분석에 적합하게 불러오고 변형하는 함�
 | `load_embeddings` / `get_embedding_distance` | 문장 임베딩 `(n, dim)` (`*_embedding.npy` 캐시) / 인접 문장 cosine 거리 |
 | `load_episode_score` `load_topic` | (개인 프로젝트용 함수) `*_episode.txt` `*_topic.txt` 읽기 |
 
-fMRI 분석에 사용할 수 있도록 tr 단위로 묶는 기능도 존재. `tr=1600`와 같이 ms 단위를 입력받는다.
-<br/>
+fMRI 분석에 사용할 수 있도록 tr 단위로 묶는 옵션이 함수마다 있다. `tr=1600`와 같이 ms 단위를 입력받는다.
+
 <br/>
 
 ### `tools_Analysis` — 통계 및 분석
 fMRI 분석이나 통계에 쓰는 함수들이 있다.
 | 함수 | 하는 일 |
 | --- | --- |
-| `hrf_convolution(y, TR, sample, method)` | Timeseries에 HRF 적용 |
+| `hrf_convolution(y, TR, sample, method)` | Timeseries에 HRF 적용. `TR` 은 ms (`glm` 의 `tr` 과 같은 단위) |
 | `glm(input, X, apply_hrf, tr, intercept=True)` | GLM분석 `[condition, voxel]` beta|
 | `resampling(x, y, x_new, method)` | 보간 리샘플링 |
-| `empirical_p_value` / `p_from_dist` | permutation null 로 p 값 |
+| `empirical_p_value` / `p_from_dist` | permutation null 로 p 값 계산 |
 | `normalized_cross_correlation(x, y, maxlags)` | Cross correlation 계산 |
 | `partial_correlation(X, a, b)` | Partial correlation 계산 |
 | `spm_hrf` `glover_hrf` + derivative 들, `monkey_hrf` | HRF 커널  |
 
 
 
-<br/>
 <br/>
 
 ### `tools_NLP` — 한국어 NLP
@@ -220,9 +228,8 @@ fMRI 분석이나 통계에 쓰는 함수들이 있다.
 | `etri_dparse(text)` | ETRI 의존구문분석 |
 | `load_stopword(input_list)` | `_data_NLP/stopwords.txt` + 추가 불용어 로딩 |
 | `get_NSP(text, raw)` / `get_NSP_embedding` | klue/bert-base NSP 점수와 임베딩 호출 |
-| `get_sentence_embedding(text, model_name)` | `paraphrase-multilingual-MiniLM-L12-v2` 임베딩 |
+| `get_sentence_embedding(text, model_name)` | 문장 임베딩 |
 
-<br/>
 <br/>
 
 ### `tools_Plot` · `tools_Surface` — 그림
@@ -241,7 +248,7 @@ fig = tools_Plot.mni_surface_fsaverage_plot(volume, voxel="1.5", view="both", vm
 | `timeseries_with_error(data, x, ...)` | 평균 ± 오차 timeseries를 플롯 |
 | `plot_colorline(x, y, z, cmap)` | 궤적을 값에 따라 색칠 |
 | `mni_surface_plot(vol, voxel, view)` / `mni_surface_fsaverage_plot` | MNI volume 을 mni152 / fsaverage 표면에 플롯 |
-| `plot_fsaverage_atlas(atlas, {parcel: 값 or rgb}, view)` | parcel (Schaefer2018) 단위 값을 fsaverage에 플롯 |
+| `plot_fsaverage_atlas(atlas, {parcel: 값 or rgb}, view)` | parcel 단위 값을 fsaverage에 플롯 |
 | `plot_roi` `plot_mask` `plot_RGBA` | ROI · mask 등을 원하는 색으로 surface에 plot|
 | `mni_surface_2dplot(v1, v2, cmap)` / `make_colormap` | 2D colormap 플롯 / colormap png 생성 (`pycortex/colormaps`) |
 | `save_mni_img(vol, view, filename, path)` | surface 그림을 png 로 다운로드 |
@@ -249,7 +256,6 @@ fig = tools_Plot.mni_surface_fsaverage_plot(volume, voxel="1.5", view="both", vm
 
 surface계열 플롯은 리눅스 환경에서는 pycortex 뷰어, 윈도우에서는 `tools_Surface`(surfplot)로 자동 분기해 matplotlib figure를 돌려준다.
 
-<br/>
 <br/>
 
 ### `Custom` — 프로젝트별 편의 함수
@@ -264,8 +270,7 @@ surface계열 플롯은 리눅스 환경에서는 pycortex 뷰어, 윈도우에�
 
 ## 4. Preprocessing 파이프라인
 ```
-dcm2bids_all.py → fMRIPrep(외부) → afterprep_all.py
-                                      save_motion → DN → sc_dt_hp_sm → 중간파일 삭제
+dcm2bids_all.py → fMRIPrep(외부) → afterprep_all.py (save_motion → DN → sc_dt_hp_sm → 중간파일 삭제)
 Audio: Clova_STT → *_FA.txt → 사람이 수동 교정 → *_FA_new.txt → apply_FA → *_STT_new.txt
 ```
 
@@ -304,7 +309,7 @@ python /mnt/d/Functions/Speech/Preprocessing/afterprep_all.py NatPAC_speech 016 
 | --- | --- | --- | --- |
 | motion | `save_motion` | FD 그림 + `*_desc-FDoutlier.txt`(FD>0.5) + `good_sub.json` 갱신 | `figures/sub-XXX_ses-YY_motion.png` |
 | DN | `DN` | confound regression — FD · 6 motion + derivative · a_comp_cor 6 · (global signal) · Legendre 2차 | `desc-DN` |
-| sc · dt · hp · sm | `sc_dt_hp_sm` | AFNI: 평균 100 스케일링 → 1차 detrend → 0.01 Hz 이상 통과 → smoothing (1.5 mm→FWHM 3, 3 mm→5) | `desc-DN_sc_dt_hp_sm` |
+| sc · dt · hp · sm | `sc_dt_hp_sm` | AFNI: 평균 스케일링 → 1차 detrend → filtering → smoothing | `desc-DN_sc_dt_hp_sm` |
 
 <br/>
 
@@ -321,20 +326,20 @@ __4) 오디오__ (`Preprocessing/Audio.py`)
 <br/>
 
 ## 5. 데이터 형식 규약
-- **fMRI**: `<paths.fmriprep>/sub-XXX/ses-YY/func/sub-XXX_ses-YY_task-<run>_space-MNI152NLin2009cAsym_desc-DN_sc_dt_hp_sm.nii.gz`. 직접 glob 하지 말고 `tools_EPI.loader` / `get_epipath`. `loader` 캐시 `*_raw.npy`(보간 없음) / `*_linear.npy` 는 `<paths.cache>` 아래 같은 `sub-XXX/ses-YY/func/` 구조(`paths.cache` 가 없으면 nii 옆).
+- **fMRI**: `<paths.fmriprep>/sub-XXX/ses-YY/func/sub-XXX_ses-YY_task-<run>_space-MNI152NLin2009cAsym_desc-DN_sc_dt_hp_sm.nii.gz`
 - **오디오 원본**: `<paths.audio>/sub-XXX/ses-YY/` 의 wav.
 - **오디오 산출물**: `<paths.transcripts>/sub-XXX/ses-YY/`. **라이브러리가 쓰는 기본 결과물은 `*_FA_new.txt`** 
-- **시각 단위는 ms.** 로더의 `tr` 인자는 출력 단위(ms)라 `tr=1000` 이면 초, `tr=1600` 이면 7T TR, `tr=1` 이면 ms 그대로. `hrf_convolution` 의 `TR` 만 초.
+- **시각 단위는 ms.** 로더의 `tr` 인자는 출력 단위(ms)라 `tr=1000` 이면 1초 단위로 반올림 된다. `tr=1` 이면 원 ms 시간 그대로.
 - **atlas 파일명**: `_data_Atlas/<name>/<name>_<voxel>mm.nii(.gz)` + `<name>.txt`(`index name`). 새 해상도는 같은 규약으로 추가한다.
 <br/>
 <br/>
 <br/>
 
 ## 6. 주의사항
-- `Preprocessing.EPI`의 `DN` `sc_dt_hp_sm` `MP2RAGE` 는 윈도우에서 돌아가지 않으므로 `"Change to WSL"` 만 돌려주고 끝난다.
-- `save_motion`은 `good_sub.json` 의 해당 세션·run 항목만 갱신하고 나머지는 보존한다. 깨진 프로젝트 JSON 은 덮어쓰지 않고 에러를 낸다.
-- ETRI · Clova 키는 환경변수를 새로 등록한 뒤 터미널·VS Code 를 껐다 켜야 반영된다.
-- `set_matplotlib()`의 Helvetica 는 하드코딩된 `C:/Users/Kwon/AppData/Local/Microsoft/Windows/Fonts/Helvetica.ttf` 경로가 박혀 있다. 다른 컴퓨터에서는 함수를 고친다.
+- `Preprocessing.EPI`의 `DN`, `sc_dt_hp_sm`, `MP2RAGE`는 윈도우에서 돌아가지 않으므로 `"Change to WSL"`만 돌려주고 끝난다.
+- `save_motion`은 `good_sub.json` 의 해당 세션 & run 항목만 갱신하고 나머지는 보존한다. 깨진 프로젝트 JSON 은 덮어쓰지 않고 에러를 낸다.
+- ETRI & Clova 키는 환경변수를 새로 등록한 뒤 터미널 & VS Code 를 껐다 켜야 반영된다.
+- `set_matplotlib()`의 Helvetica 는 하드코딩된 `Helvetica.ttf` 경로가 박혀 있다. 다른 컴퓨터에서는 함수를 고친다.
 - `tools_Surface`는 pycortex DB(`./pycortex/db`)의 `mni152_asym_09c` `fsaverage` `MEBRAIN` 표면을 읽는다. DB가 없으면 surface plot 이 안 된다.
 <br/>
 <br/>

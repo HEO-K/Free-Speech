@@ -226,22 +226,21 @@ def hrf_convolution(y, TR, sample=1, method="glover"):
 
     Args:
         y (1d array): input data
-        TR (float): TR (second)
+        TR (float): TR (ms). 다른 로더·glm 과 같은 단위 — 7T speech 는 1600
         sample (int, optional): TR당 샘플 개수. Defaults to 1.
-        
+        method (str, optional): "glover"(사람 BOLD) / "mion" / "bold"(원숭이, Leite 2002)
+
     Returns:
         array: BOLD signal
     """
+    TR_s = TR / 1000                                             # 커널 함수는 초 단위
     if method == "glover":
-        hrf = glover_hrf(TR, sample)
-        y_new = np.convolve(y, hrf, mode="full")[:len(y)]
-    elif method == "mion":
-        hrf = monkey_hrf(TR, contrast_type=method, dt=TR/sample)
-        y_new = np.convolve(y, hrf, mode="full")[:len(y)]
-    elif method == "bold":
-        hrf = monkey_hrf(TR, contrast_type=method, dt=TR/sample)
-        y_new = np.convolve(y, hrf, mode="full")[:len(y)]
-    return(y_new)
+        hrf = glover_hrf(TR_s, sample)
+    elif method in ("mion", "bold"):
+        hrf = monkey_hrf(TR_s, contrast_type=method, dt=TR_s/sample)
+    else:
+        raise ValueError(f"unknown method: {method}")
+    return np.convolve(y, hrf, mode="full")[:len(y)]
 
 
 def glm(input, X, apply_hrf=True, tr=1000, intercept=True, **kwargs):
@@ -268,7 +267,7 @@ def glm(input, X, apply_hrf=True, tr=1000, intercept=True, **kwargs):
     n = X.shape[0]
 
     if apply_hrf:
-        X_hrf = np.array([hrf_convolution(X[i,:], tr/1000, **kwargs) for i in range(n)]).T
+        X_hrf = np.array([hrf_convolution(X[i,:], tr, **kwargs) for i in range(n)]).T
     else:
         X_hrf = X.T                                              # [times, condition]
 
