@@ -143,14 +143,15 @@ def set_matplotlib():
 
 
 def load_topic_transition(sub, ses, runname):
-    basepath = get_audio_path("I_AM_SOLO", derivatives=False)
+    # concat_timestamp 는 전사 산출물(derivatives/transcripts) 아래에 있다
+    basepath = get_audio_path("I_AM_SOLO", derivatives=True)
     basepath = os.path.join(basepath, "concat_timestamp", "Topic_transition")
     if sub[-1] == "1": group = f"{sub}{ses}"
     else: group = f"{ses}{sub}"
     filepath = os.path.join(basepath, f"{group}_task-{runname}.txt")
 
     topics = []
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding="utf-8") as f:   # 한글 주제명 — cp949 기본값으로는 깨진다
         while True:
             line = f.readline()
             if line.strip() == '':  break

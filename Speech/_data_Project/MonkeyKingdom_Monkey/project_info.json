@@ -1,15 +1,3 @@
 {
-    "Name": "MonkeyKingdom_Monkey",
-    "bids_path": "/mnt/e/MonkeyKingdom_Monkey",
-    "bids_path_window": "E:/MonkeyKingdom_Monkey",
-    "audio_path": "/mnt/e/MonkeyKingdom_Monkey",
-    "audio_path_window": "E:/MonkeyKingdom_Monkey",
-    "ses-11": [
-        {
-            "name": "movieMONKEY",
-            "type": "func",
-            "runs": 5,
-            "modality": "bold"
-        }
-    ]
+    "redirect": "E:/MonkeyKingdom_Monkey/registry/MonkeyKingdom_Monkey"
 }

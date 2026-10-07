@@ -1,29 +1,3 @@
 {
-    "Name": "Speech_3T",
-    "bids_path": "/mnt/d/speech_3T/_DATA_fMRI",
-    "bids_path_window": "D:/speech_3T/_DATA_fMRI",
-    "audio_path": "/mnt/d/speech_3T/_DATA_Audio",
-    "audio_path_window": "D:/speech_3T/_DATA_Audio",
-    "info": [
-        {
-            "name": "speechSTROLL",
-		"type": "func",
-		"modality": "bold" 
-        },
-        {
-            "name": "thinkSTROLL",
-		"type": "func",
-		"modality": "bold" 
-        },
-        {
-            "name": "speechRECALL",
-		"type": "func",
-		"modality": "bold" 
-        },
-        {
-            "name": "T1",
-		"type": "anat",
-		"modality": "T1w"
-        }
-    ]
+    "redirect": "D:/speech_3T/registry/speech_3T_v4"
 }

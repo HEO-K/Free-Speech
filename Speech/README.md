@@ -99,20 +99,29 @@ __3) 외부 의존__
 __프로젝트 기본 정보 `project_info.json`__ — 데이터 루트 + 세션별 run 목록
 ```json
 {
-    "Name": "NatPAC_speech",
-    "bids_path": "/mnt/e/NatPAC/_DATA_fMRI",
-    "bids_path_window": "E:/NatPAC/_DATA_fMRI",
-    "audio_path": "/mnt/e/NatPAC/_DATA_Audio",
-    "audio_path_window": "E:/NatPAC/_DATA_Audio",
+    "Name": "speech_3T",
+    "root": "D:/speech_3T",
+    "paths": {
+        "rawdata": "rawdata",
+        "fmriprep": "derivatives/fmriprep",
+        "audio": "sourcedata/audio",
+        "transcripts": "derivatives/transcripts",
+        "cache": "derivatives/cache"
+    },
     "ses-01": [
         {"name": "speechFREE", "type": "func", "runs": 1, "modality": "bold"}
     ]
 }
 ```
+- `root` 는 어느 OS 형식으로 적어도 된다 — `tools.native_path()` 가 `D:/…` ↔ `/mnt/d/…` 를 지금 OS 에 맞게 바꾼다. `paths` 는 `root` 상대경로.
+- `paths` 키: `rawdata`(BIDS raw) `fmriprep`(fMRIPrep + 후처리 → `get_brain_path`) `audio`(원본 wav → `get_audio_path(derivatives=False)`) `transcripts`(FA_new 등 정본 전사 → `get_audio_path`) `cache`(loader 의 `.npy` 캐시 폴더, 없으면 원본 파일 옆에 둔다 → `get_cache_path`). 로컬에 없는 데이터는 키를 빼면 `get_*_path` 가 `KeyError` 를 낸다.
+- 구형 스키마(`bids_path` `bids_path_window` `audio_path` `audio_path_window` 절대경로 네 개, fMRIPrep 은 `bids_path/derivatives` 고정)도 그대로 읽힌다. 신형을 읽을 때 구형 키는 배치가 옛 규약(`fmriprep` = `rawdata/derivatives` 등)과 같을 때만 채워지므로, 경로는 `info["bids_path"]` 를 직접 읽지 말고 `get_brain_path` `get_audio_path` `get_cache_path` 로 얻는다.
 - 세션이 없으면 `"info": [...]` 하나로 둔다 (`speech_3T` 가 그 예).
 - `runs` 는 정수 n(→ `run-1 … run-n`) 또는 리스트 `[2]`(→ `run-2` 만). 없으면 run 라벨 없이 `name` 만 쓴다.
 - `type` 은 `func` `anat` `fmap`, `modality` 는 dcm2bids 매칭용 (`bold` `T1w` `MP2RAGE` `phase` `magnitude` `epi`).
-- 기본은 리눅스용 경로(`bids_path`)이지만, 윈도우 환경에서는 Windows 경로(`bids_path_window`)를 둘 다 적는다. `tools.isWSL()` 이 `sys.platform` 으로 고른다.
+
+__레지스트리를 데이터셋 안에 두기 (redirect)__\
+`_data_Project/<Project>/project_info.json` 을 `{"redirect": "D:/speech_3T/registry/speech_3T"}` 한 줄로 두면 `project_info.json` 과 `good_sub.json` 을 그 폴더에서 읽고 쓴다(`get_project_dir`). 분석 대상 명세를 데이터와 같이 두기 위한 것으로, `speech_3T` 네 키가 이렇게 되어 있다.
 
 __`good_sub.json`__ — 분석 대상 피험자. `Preprocessing.EPI.save_motion` 이 FD>0.5 비율이 `threshold` 미만인 run 을 자동으로 추가한다.
 ```json
@@ -120,15 +129,15 @@ __`good_sub.json`__ — 분석 대상 피험자. `Preprocessing.EPI.save_motion`
 ```
 
 __프로젝트 만들기__\
-[`make_project_info.py`](make_project_info.py) 의 상단 변수(`Project_name` `bids_path` …)를 고치고 실행하면 세션·run 을 물어보며 JSON 을 만든다. 직접 써도 된다.
+[`make_project_info.py`](make_project_info.py) 의 상단 변수(`Project_name` `root` `paths`)를 고치고 실행하면 세션·run 을 물어보며 `<root>/registry/<Project>/project_info.json` 과 그곳을 가리키는 redirect 를 만든다. 직접 써도 된다.
 
 __프로젝트 읽기__
 ```python
 from Speech import load_project_info as lp
 lp.get_good_sub("NatPAC_speech", ses="01", target_run="speechFREE_run-1")   # 피험자 번호 리스트
 lp.get_run_names("NatPAC_speech", ses="02")                                 # ['REST_run-1', 'speechMOVIE_run-1']
-lp.get_brain_path("NatPAC_speech")                                          # .../_DATA_fMRI/derivatives
-lp.get_audio_path("NatPAC_speech", derivatives=False)                       # .../_DATA_Audio
+lp.get_brain_path("NatPAC_speech")                                          # .../derivatives/fmriprep
+lp.get_audio_path("NatPAC_speech", derivatives=False)                       # .../sourcedata/audio
 ```
 <br/>
 <br/>
@@ -270,7 +279,7 @@ python Speech/Preprocessing/dcm2bids_all.py <Project> <dcm 폴더> <sub> [--ses 
 
 <br/>
 
-__2) fMRIPrep__ — 코드화 할 수 없어 직접 fMRIPrep을 돌려야 한다. `derivatives/sub-XXX.html` 을 확인한다.
+__2) fMRIPrep__ — 코드화 할 수 없어 직접 fMRIPrep을 돌려야 한다. `paths.fmriprep` 폴더의 `sub-XXX.html` 을 확인한다.
 
 <br/>
 
@@ -312,9 +321,9 @@ __4) 오디오__ (`Preprocessing/Audio.py`)
 <br/>
 
 ## 5. 데이터 형식 규약
-- **fMRI**: `<bids_path>/derivatives/sub-XXX/ses-YY/func/sub-XXX_ses-YY_task-<run>_space-MNI152NLin2009cAsym_desc-DN_sc_dt_hp_sm.nii.gz`. 직접 glob 하지 말고 `tools_EPI.loader` / `get_epipath`. `loader` 캐시는 같은 자리의 `*_raw.npy`(보간 없음) / `*_linear.npy`.
-- **오디오 원본**: `<audio_path>/sub-XXX/ses-YY/` 의 wav.
-- **오디오 산출물**: `<audio_path>/derivatives/sub-XXX/ses-YY/`. **라이브러리가 쓰는 기본 결과물은 `*_FA_new.txt`** 
+- **fMRI**: `<paths.fmriprep>/sub-XXX/ses-YY/func/sub-XXX_ses-YY_task-<run>_space-MNI152NLin2009cAsym_desc-DN_sc_dt_hp_sm.nii.gz`. 직접 glob 하지 말고 `tools_EPI.loader` / `get_epipath`. `loader` 캐시 `*_raw.npy`(보간 없음) / `*_linear.npy` 는 `<paths.cache>` 아래 같은 `sub-XXX/ses-YY/func/` 구조(`paths.cache` 가 없으면 nii 옆).
+- **오디오 원본**: `<paths.audio>/sub-XXX/ses-YY/` 의 wav.
+- **오디오 산출물**: `<paths.transcripts>/sub-XXX/ses-YY/`. **라이브러리가 쓰는 기본 결과물은 `*_FA_new.txt`** 
 - **시각 단위는 ms.** 로더의 `tr` 인자는 출력 단위(ms)라 `tr=1000` 이면 초, `tr=1600` 이면 7T TR, `tr=1` 이면 ms 그대로. `hrf_convolution` 의 `TR` 만 초.
 - **atlas 파일명**: `_data_Atlas/<name>/<name>_<voxel>mm.nii(.gz)` + `<name>.txt`(`index name`). 새 해상도는 같은 규약으로 추가한다.
 <br/>

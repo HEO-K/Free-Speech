@@ -522,20 +522,23 @@ def load_embeddings(Project, sub, runname, ses=None, save=False):
     
     if ses == None: filename = f"sub-{sub}_task-{runname}_embedding.npy"
     else: filename = f"sub-{sub}_ses-{ses}_task-{runname}_embedding.npy"
-    
+    # 캐시는 paths.cache 가 있으면 그 아래(같은 sub/ses 구조), 없으면 전사 폴더 안
+    npypath = load_project_info.cache_file_path(
+        Project, audio_path, load_project_info.get_audio_path(Project, derivatives=True), filename)
+
     if save:
         from .tools_NLP import get_sentence_embedding
         sentence = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,-1]
         embeddings = get_sentence_embedding(sentence)
-        np.save(os.path.join(audio_path, filename), embeddings)
+        np.save(npypath, embeddings)
     else:
         try:
-            embeddings = np.load(os.path.join(audio_path, filename))
+            embeddings = np.load(npypath)
         except:
             from .tools_NLP import get_sentence_embedding
             sentence = np.array(get_sentence_FA(Project, sub, runname, ses=ses))[:,-1]
             embeddings = get_sentence_embedding(sentence)
-            np.save(os.path.join(audio_path, filename), embeddings)
+            np.save(npypath, embeddings)
             
     
     return(embeddings)

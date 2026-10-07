@@ -2,26 +2,28 @@
 import numpy as np
 import os
 import json
-from Speech.tools import isWSL
+from Speech.tools import isWSL, native_path, to_windows_path
 
 
 
 ############################## 파라메터 수정 필요 ####################################
-# 정보 파일 저장 위치: Speech/_data_Project/Project_Name/에 저장됨
+# 레지스트리 키 위치: Speech/_data_Project/Project_Name/ 에는 redirect 한 줄만 두고,
+# project_info.json 본문은 데이터셋 안 <root>/registry/Project_Name/ 에 저장됨
 if  isWSL(): base_path = "/mnt/d/Functions/Speech/_data_Project"
 else: base_path = "D:/Functions/Speech/_data_Project"
 
-# 프로젝트 이름 
+# 프로젝트 이름
 Project_name = "Paranoia"
-os.makedirs(os.path.join(base_path,Project_name), exist_ok=True)
-# bids path
-bids_path = "/mnt/f/Paranoia/_DATA_fMRI"
-# for WSL environment, ubuntu면 빈 문자열으로
-bids_path_window = "F:/Paranoia/_DATA_fMRI" 
-
-# audio path
-audio_path = "/mnt/f/Moth/_DATA_Audio"
-audio_path_window = "F:/Moth/_DATA_Audio"
+# 데이터 루트 — 어느 OS 형식이든 된다 (tools.native_path 가 변환)
+root = "F:/Paranoia"
+# root 상대경로. 로컬에 없는 데이터는 키를 지운다 (README "프로젝트 등록" 참고)
+paths = {
+    "rawdata": "rawdata",
+    "fmriprep": "derivatives/fmriprep",
+    "audio": "sourcedata/audio",
+    "transcripts": "derivatives/transcripts",
+    "cache": "derivatives/cache",
+}
 
 
 ####################################################################################
@@ -62,10 +64,8 @@ for key in ses_info:
 
 project_data = {
     'Name': Project_name,
-    'bids_path': bids_path,
-    'bids_path_window': bids_path_window,
-    'audio_path': audio_path,
-    'audio_path_window': audio_path_window
+    'root': root,
+    'paths': paths,
 }
 
 for key in ses_info:
@@ -74,9 +74,14 @@ for key in ses_info:
 
 
 
-# 저장
-json_path = os.path.join(base_path, Project_name, "project_info.json")
-with open(json_path, "w", encoding="utf-8") as f:
+# 저장 — 본문은 데이터셋 안 registry, Speech 쪽에는 그 폴더를 가리키는 redirect
+registry = os.path.join(native_path(root), "registry", Project_name)
+os.makedirs(registry, exist_ok=True)
+with open(os.path.join(registry, "project_info.json"), "w", encoding="utf-8") as f:
     json.dump(project_data, f, indent=4)
+
+os.makedirs(os.path.join(base_path, Project_name), exist_ok=True)
+with open(os.path.join(base_path, Project_name, "project_info.json"), "w", encoding="utf-8") as f:
+    json.dump({"redirect": to_windows_path(registry).replace("\\", "/")}, f, indent=4)
 
 # %%

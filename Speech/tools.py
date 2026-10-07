@@ -18,6 +18,43 @@ def isWSL():
     return sys.platform != "win32"
 
 
+def _split_drive_path(path):
+    """ 'D:/x/y' 또는 '/mnt/d/x/y' → ('d', 'x/y'). 둘 다 아니면 None. """
+    import re
+    p = str(path).replace("\\", "/")
+    m = re.match(r"^([A-Za-z]):(?:/(.*))?$", p)
+    if m: return m.group(1).lower(), m.group(2) or ""
+    m = re.match(r"^/mnt/([A-Za-z])(?:/(.*))?$", p)
+    if m: return m.group(1).lower(), m.group(2) or ""
+    return None
+
+
+def to_posix_path(path):
+    """ 드라이브 경로를 WSL 형식('/mnt/d/...')으로. 이미 그 형식이거나 드라이브 경로가 아니면 그대로. """
+    parts = _split_drive_path(path)
+    if parts is None: return str(path).replace("\\", "/")
+    drive, rest = parts
+    return f"/mnt/{drive}/{rest}" if rest else f"/mnt/{drive}"
+
+
+def to_windows_path(path):
+    """ 드라이브 경로를 Windows 형식('D:/...')으로. 이미 그 형식이거나 드라이브 경로가 아니면 그대로. """
+    parts = _split_drive_path(path)
+    if parts is None: return str(path).replace("\\", "/")
+    drive, rest = parts
+    return f"{drive.upper()}:/{rest}"
+
+
+def native_path(path):
+    """ 'D:/x' 와 '/mnt/d/x' 를 지금 OS 에 맞는 쪽으로 바꾼다.
+
+        project_info.json 에 경로를 한 번만 적고(bids_path / bids_path_window 이중 키 없이)
+        Windows 와 WSL 양쪽에서 쓰기 위한 것. 드라이브 경로가 아니면 손대지 않는다.
+    """
+    if path is None: return None
+    return to_posix_path(path) if isWSL() else to_windows_path(path)
+
+
 def isRealWSL():
     """ 순수 Linux가 아니라 진짜 WSL 위인지 확인
 

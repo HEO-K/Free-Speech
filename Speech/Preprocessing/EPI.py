@@ -294,7 +294,7 @@ def save_config(check_results, target_runs_data, Project, sub, ses=None):
             json_data["descriptions"].append(run_dict)
             
 
-    bids_path = info['bids_path']
+    bids_path = get_brain_path(Project, derivatives=False)   # BIDS raw (paths.rawdata)
     os.makedirs(os.path.join(bids_path, "tmp_dcm2bids"), exist_ok=True)
 
     json_path = os.path.join(bids_path, "tmp_dcm2bids", filename)
@@ -318,12 +318,9 @@ def run_dcm2bids(Project, sub, input_path, ses=None):
 
     if isWSL() == False: return "WSL, base환경에서 실행!!"
 
-    # 정보 불러오기.
-    info = get_full_info(Project)
-    
-    bids_path = info['bids_path']
-    
-    if ses == None: 
+    bids_path = get_brain_path(Project, derivatives=False)   # BIDS raw (paths.rawdata)
+
+    if ses == None:
         filename = "sub-"+sub+"_tmp.json"
         command = ["dcm2bids",
                 "-d", input_path,
@@ -442,7 +439,7 @@ def DN(Project, sub, runname, ses=None, epi_space="MNI152NLin2009cAsym", custom_
     import nibabel as nib
     info = get_full_info(Project)
     if isWSL():
-        file_path = os.path.join(info['bids_path'], "derivatives", "sub-"+sub)
+        file_path = os.path.join(get_brain_path(Project), "sub-"+sub)
     else:
         return "Change to WSL"
     if ses == None:
@@ -493,10 +490,7 @@ def save_motion(Project, sub, ses=None, threshold=0.05):
     # 정보 불러오기.
     info = get_full_info(Project) 
     # 피험자 위치
-    if isWSL():
-        sub_path = os.path.join(info['bids_path'], "derivatives", "sub-"+sub)
-    else:
-        sub_path = os.path.join(info['bids_path_window'], "derivatives", "sub-"+sub)
+    sub_path = os.path.join(get_brain_path(Project), "sub-"+sub)
     fig_path = os.path.join(sub_path,'figures')
     # run 정보
     if ses == None:
@@ -539,9 +533,8 @@ def save_motion(Project, sub, ses=None, threshold=0.05):
 
         # save subjects
         if np.mean(fd>0.5) < threshold: # FD>0.5인 구간이 5% 미만
-            good_sub_path = __file__
-            good_sub_path = os.path.abspath(os.path.join(good_sub_path, "..", ".."))
-            good_sub_path = os.path.join(good_sub_path, "_data_Project", Project, "good_sub.json")
+            from Speech.load_project_info import get_good_sub_path
+            good_sub_path = get_good_sub_path(Project)   # redirect 된 프로젝트는 데이터셋 쪽 파일을 갱신한다
             if ses == None: ses_index = "info"
             else: ses_index = "ses-"+ses
             # 기존 파일은 그대로 두고 이 세션·run 항목만 갱신한다.
@@ -628,10 +621,7 @@ def save_tsnr(Project, sub, ses=None, epi_space="MNI152NLin2009cAsym"):
     # 정보 불러오기.
     info = get_full_info(Project) 
     # 피험자 위치
-    if isWSL():
-        sub_path = os.path.join(info['bids_path'], "derivatives", "sub-"+sub)
-    else:
-        sub_path = os.path.join(info['bids_path_window'], "derivatives", "sub-"+sub)
+    sub_path = os.path.join(get_brain_path(Project), "sub-"+sub)
     fig_path = os.path.join(sub_path,'figures')
     # run 정보
     if ses == None:
@@ -727,7 +717,7 @@ def sc_dt_hp_sm(Project, sub, runname, ses=None, epi_space="MNI152NLin2009cAsym"
     import nibabel as nib
     info = get_full_info(Project)
     if isWSL():
-        file_path = os.path.join(info['bids_path'], "derivatives", "sub-"+sub)
+        file_path = os.path.join(get_brain_path(Project), "sub-"+sub)
     else:
         return "Change to WSL"
     if ses == None:
@@ -790,7 +780,7 @@ def sc_dt_hp_sm(Project, sub, runname, ses=None, epi_space="MNI152NLin2009cAsym"
 
 def delete_intermediate_files(Project, sub, runname, ses=None, epi_space="MNI152NLin2009cAsym"):
     info = get_full_info(Project)
-    file_path = os.path.join(info['bids_path'], "derivatives", f"sub-{sub}")
+    file_path = os.path.join(get_brain_path(Project), f"sub-{sub}")
     if ses == None:
         file_path = os.path.join(file_path, "func")
         input_fname = os.path.join(file_path, 
@@ -803,19 +793,22 @@ def delete_intermediate_files(Project, sub, runname, ses=None, epi_space="MNI152
     mean_fname = input_fname.split(".nii.gz")[0] + '_mean.nii.gz'
     SC_fname = input_fname.split(".nii.gz")[0] + '_sc.nii.gz'
     DT_fname = input_fname.split(".nii.gz")[0] + '_sc_dt.nii.gz'
+    SM_HP_fname = input_fname.split(".nii.gz")[0] + '_sc_dt_hp_sm.nii.gz'
     if os.path.exists(mean_fname): os.remove(mean_fname)
     if os.path.exists(SC_fname): os.remove(SC_fname)
     if os.path.exists(DT_fname): os.remove(DT_fname)
-    
-    
+    # desc-DN 은 sc_dt_hp_sm 의 입력일 뿐 다시 읽는 곳이 없어 최종본(_sc_dt_hp_sm)이 만들어졌으면 지운다.
+    # 비평활본 _sc_dt_hp 는 get_epipath(smooth=False) 가 읽으므로 남긴다.
+    if os.path.exists(SM_HP_fname) and os.path.exists(input_fname): os.remove(input_fname)
+
+
 
 
 # SS MP2RAGE
 def MP2RAGE(Project, sub, output=None, ses=None, replace="03_UNI_SS.nii.gz"):
     from Speech.tools import isWSL
     if not isWSL(): return("Change WSL")
-    info = get_full_info(Project)
-    bids_path = info['bids_path']
+    bids_path = get_brain_path(Project, derivatives=False)   # BIDS raw (paths.rawdata)
     if output == None:
         if bids_path[-1] == "/": output_path = bids_path[:-1]+"_raw"
         else: output_path = bids_path+"_raw"

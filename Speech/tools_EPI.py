@@ -20,26 +20,45 @@ def get_epipath(Project, sub, taskname, ses=None, smooth=True, epi_space="MNI152
     Returns: 
         Path string
     """
-    info = load_project_info.get_full_info(Project)
-    if isWSL()==True: 
-        base = info["bids_path"]
-    else: 
-        base = info["bids_path_window"]
-    
+    base = load_project_info.get_brain_path(Project)   # fMRIPrep(+후처리) 폴더. 구형·신형 스키마 모두 여기서 갈린다
+
     if smooth: preprocess = "_desc-DN_sc_dt_hp_sm.nii.gz"
     else: preprocess = "_desc-DN_sc_dt_hp.nii.gz"
-    if ses == None: 
+    if ses == None:
         seslabel = ""
-        epi_path = os.path.join(base, "derivatives", f"sub-{sub}", "func")
-    else: 
+        epi_path = os.path.join(base, f"sub-{sub}", "func")
+    else:
         seslabel = f"_ses-{ses}"
-        epi_path = os.path.join(base, "derivatives", f"sub-{sub}", f"ses-{ses}", "func")
+        epi_path = os.path.join(base, f"sub-{sub}", f"ses-{ses}", "func")
     
     epi_name = f"sub-{sub}{seslabel}_task-{taskname}_space-{epi_space}{preprocess}"
     filepath = os.path.join(epi_path, epi_name)
    
     return(filepath)
-    
+
+
+def get_cachepath(Project, sub, taskname, ses=None, confound_interp='linear',
+                  zscoring=True, smooth=True, epi_space="MNI152NLin2009cAsym", dtype="float16"):
+    """ loader 가 만드는 .npy 캐시의 경로 (인자는 loader 와 같다)
+
+        project_info 에 paths.cache 가 있으면 그 아래(같은 sub/func 구조), 없으면 nii 옆.
+        파일이 있는지는 보지 않는다 — 없으면 loader 를 한 번 부르면 생긴다.
+
+    Returns:
+        Path string
+    """
+    filepath = get_epipath(Project, sub, taskname, ses, smooth, epi_space)
+    # 캐시 파일명은 결과에 영향을 주는 옵션을 전부 담는다.
+    # 기본 옵션(zscoring=True, float16)은 예전 이름(_raw / _linear)을 그대로 써서 기존 캐시가 유효하다.
+    tag = "raw" if confound_interp == False else confound_interp
+    if not zscoring:
+        tag += "_nozscore"
+    if np.dtype(dtype) != np.float16:
+        tag += "_" + np.dtype(dtype).name
+    return load_project_info.cache_file_path(
+        Project, os.path.dirname(filepath), load_project_info.get_brain_path(Project),
+        os.path.basename(filepath)[:-7] + f"_{tag}.npy")
+
 
 
 #############################################################################################
@@ -68,14 +87,7 @@ def loader(Project, sub, taskname, ses=None, confound_interp='linear', save=Fals
         raise ValueError(f"confound_interp must be False or 'linear' (got {confound_interp!r})")
 
     filepath = get_epipath(Project, sub, taskname, ses, smooth, epi_space)
-    # 캐시 파일명은 결과에 영향을 주는 옵션을 전부 담는다.
-    # 기본 옵션(zscoring=True, float16)은 예전 이름(_raw / _linear)을 그대로 써서 기존 캐시가 유효하다.
-    tag = "raw" if confound_interp == False else confound_interp
-    if not zscoring:
-        tag += "_nozscore"
-    if np.dtype(dtype) != np.float16:
-        tag += "_" + np.dtype(dtype).name
-    npypath = filepath[:-7] + f"_{tag}.npy"
+    npypath = get_cachepath(Project, sub, taskname, ses, confound_interp, zscoring, smooth, epi_space, dtype)
 
     if not save and os.path.exists(npypath):
         try:

@@ -11,16 +11,14 @@ def load_average_epi(sub, clip):
     return(np.load(sub_epi))
 
 def load_epi(sub, clip, run, smooth=True, dtype="float16"):
-    from Speech.load_project_info import get_brain_path
+    from Speech.load_project_info import get_brain_path, cache_file_path
     from scipy.stats import zscore
     basepath = get_brain_path("MonkeyKingdom_Monkey")
-    if smooth:
-        epipath = os.path.join(basepath, f"sub-{sub}", "func", f"sub-{sub}_task-clip{clip}_run-{run}_sc_dt_hp_sm.nii.gz")
-        npypath = os.path.join(basepath, f"sub-{sub}", "func", f"sub-{sub}_task-clip{clip}_run-{run}_sc_dt_hp_sm.npy")
-
-    else:
-        epipath = os.path.join(basepath, f"sub-{sub}", "func", f"sub-{sub}_task-clip{clip}_run-{run}_sc_dt_hp.nii.gz")
-        npypath = os.path.join(basepath, f"sub-{sub}", "func", f"sub-{sub}_task-clip{clip}_run-{run}_sc_dt_hp.npy")
+    func = os.path.join(basepath, f"sub-{sub}", "func")
+    stem = f"sub-{sub}_task-clip{clip}_run-{run}_sc_dt_hp" + ("_sm" if smooth else "")
+    epipath = os.path.join(func, stem + ".nii.gz")
+    # zscore 한 float16 캐시는 paths.cache 아래 (derivatives/cache/sub-*/func/)
+    npypath = cache_file_path("MonkeyKingdom_Monkey", func, basepath, stem + ".npy")
     
     try:
         epi = np.load(npypath)
